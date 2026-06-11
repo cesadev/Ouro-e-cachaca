@@ -3,11 +3,49 @@ import math
 import random
 from cena_base import CenaBase
 
+# ==============================================================================
+# NOVA CLASSE CARTA
+# ==============================================================================
+class Carta:
+    def __init__(self, nome, poder, vida, imagem=None, custo_sangue=0, valor_sacrificio=1):
+        self.nome = nome
+        self.poder = poder
+        self.dano = poder  # Mantém compatibilidade com a engine que usa "dano"
+        self.vida = vida
+        self.custo_sangue = custo_sangue
+        self.valor_sacrificio = valor_sacrificio
+        
+        # Se nenhuma imagem for passada, cria um rect/fundo padrão para não quebrar o Pygame
+        if imagem is None:
+            self.imagem = pygame.Surface((140, 190), pygame.SRCALPHA)
+            self.imagem.fill((255, 255, 255))
+        else:
+            self.imagem = imagem
+            
+        self.rect = self.imagem.get_rect()
+
+    def desenhar(self, tela, posicao_x, posicao_y):
+        self.rect.topleft = (posicao_x, posicao_y)
+        tela.blit(self.imagem, self.rect)
+        
+    def copy(self):
+        """Retorna uma cópia real da instância da carta (essencial para invocações)"""
+        return Carta(self.nome, self.poder, self.vida, self.imagem, self.custo_sangue, self.valor_sacrificio)
+
+
+# ==============================================================================
+# CENA DE COMBATE REFATORADA
+# ==============================================================================
 class CenaCombate(CenaBase):
     def __init__(self, tela, deck_jogador, dados_da_fase):
         super().__init__(tela) 
         
-        self.deck_jogador = deck_jogador
+        # Transforma o deck inicial em objetos da classe Carta caso venham como dicionários
+        self.deck_jogador = [
+            Carta(c["nome"], c.get("dano", c.get("poder", 0)), c["vida"], c.get("imagem"), c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
+            if isinstance(c, dict) else c
+            for c in deck_jogador
+        ]
         self.mao_jogador = [] 
         
         # --- DADOS DA FASE ---
@@ -33,7 +71,7 @@ class CenaCombate(CenaBase):
         self.idx_atacante_atual = 0     
         self.progresso_ataque = 0.0     
         self.dano_aplicado = False      
-        self.tempo_espera_fase = 0.0 # Controla o mini cooldown entre as ações
+        self.tempo_espera_fase = 0.0 
         
         # --- VELOCIDADE DO ATAQUE ---
         self.velocidade_ataque = 0.002  
@@ -47,14 +85,21 @@ class CenaCombate(CenaBase):
         self.slots_aliados = [None, None, None, None]
         self.slots_inimigos = [None, None, None, None]
         
-        # --- NOVO: FILA DE MEMÓRIA/ANTECIPAÇÃO DO INIMIGO (4 FILAS INDEPENDENTES) ---
+        # --- FILA DE MEMÓRIA/ANTECIPAÇÃO DO INIMIGO ---
         self.filas_espera_inimigas = [[], [], [], []]
         
-        # Puxa os obstáculos que começam fixos no tabuleiro principal (ex: Tronco)
+        # Puxa os obstáculos iniciais convertendo-os em objetos Carta
         for obstaculo in dados_da_fase.get("obstaculos_iniciais", []):
-            self.slots_inimigos[obstaculo["slot"]] = obstaculo.copy()
+            carta_obs = Carta(
+                obstaculo["nome"], 
+                obstaculo.get("dano", 0), 
+                obstaculo["vida"], 
+                obstaculo.get("imagem"), 
+                obstaculo.get("custo_sangue", 0), 
+                obstaculo.get("valor_sacrificio", 0)
+            )
+            self.slots_inimigos[obstaculo["slot"]] = carta_obs
             
-        # Pré-carrega o Turno 1 na fila de antecipação visual logo no início do jogo
         self._carregar_intencoes_inimigas_do_turno(1)
         
         # --- RECURSOS AND BALANÇA ---
@@ -99,7 +144,7 @@ class CenaCombate(CenaBase):
         self.hitboxes_mao = [] 
         self.hitboxes_slots_aliados = [] 
         self.hitboxes_slots_inimigos = []
-        self.hitboxes_slots_espera = [] # Novas hitboxes para as mini cartas de cima
+        self.hitboxes_slots_espera = [] 
         self.hitboxes_vida = [] 
         self.hitboxes_itens = []
         
@@ -108,22 +153,27 @@ class CenaCombate(CenaBase):
         self.mensagem_debug = "Início do Turno: Compre uma carta!"
         self.debug = pygame.font.SysFont("Arial", 36)
         self.fonte_cartas = pygame.font.SysFont("Arial", 20) 
-        self.fonte_mini = pygame.font.SysFont("Arial", 14) # Fonte menor para caber na mini carta
+        self.fonte_mini = pygame.font.SysFont("Arial", 14) 
         self.index_foco = None 
         
     def _carregar_intencoes_inimigas_do_turno(self, turno):
-        """Varre o script do turno e adiciona spawns de cartas na fila correspondente"""
+        """Varre o script do turno e adiciona spawns de objetos Carta na fila correspondente"""
         acoes = self.script_inimigo.get(turno, [])
         for comando in acoes:
             if comando["acao"] == "jogar_carta":
                 slot = comando["slot"]
-                self.filas_espera_inimigas[slot].append(comando["carta"].copy())
+                c = comando["carta"]
+                if isinstance(c, dict):
+                    carta_obj = Carta(c["nome"], c.get("dano", c.get("poder", 0)), c["vida"], c.get("imagem"), c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
+                else:
+                    carta_obj = c.copy()
+                self.filas_espera_inimigas[slot].append(carta_obj)
+
     def processar_eventos(self, eventos):
         for event in eventos:
             if event.type == pygame.MOUSEBUTTONDOWN: 
                 pos_mouse = pygame.mouse.get_pos()
                 
-                # BOTÃO DIREITO: CANCELA INVOCAÇÃO SEM PERDER AS CARTAS
                 if event.button == 3: 
                     if self.estado_atual in ["sacrificio", "posicionamento"]:
                         self.estado_atual = "normal"
@@ -139,7 +189,8 @@ class CenaCombate(CenaBase):
                         
                         if self.comprar_coelho_rect.collidepoint(pos_mouse):
                             if not self.ja_comprou_neste_turno and self.coelhos_disponiveis > 0:
-                                self.mao_jogador.append({"nome": "Coelho", "dano": 0, "vida": 1, "custo_sangue": 0, "valor_sacrificio": 1})
+                                # Instancia o Coelho usando a nova Classe Carta
+                                self.mao_jogador.append(Carta("Coelho", 0, 1, None, 0, 1))
                                 self.coelhos_disponiveis -= 1
                                 self.ja_comprou_neste_turno = True
                                 comprou_agora = True
@@ -151,7 +202,7 @@ class CenaCombate(CenaBase):
                                 self.mao_jogador.append(carta)
                                 self.ja_comprou_neste_turno = True
                                 comprou_agora = True
-                                self.mensagem_debug = f"Comprou: {carta['nome']}"
+                                self.mensagem_debug = f"Comprou: {carta.nome}"
                         
                         if comprou_agora:
                             self.estado_atual = "normal"
@@ -174,8 +225,8 @@ class CenaCombate(CenaBase):
                                 if self.estado_atual == "normal":
                                     if self.index_foco is not None and self.index_foco < len(self.mao_jogador):
                                         carta_tentativa = self.mao_jogador[self.index_foco]
-                                        custo = carta_tentativa.get("custo_sangue", 0)
-                                        sangue_disponivel = sum(slot.get("valor_sacrificio", 1) for slot in self.slots_aliados if slot is not None)
+                                        custo = carta_tentativa.custo_sangue
+                                        sangue_disponivel = sum(slot.valor_sacrificio for slot in self.slots_aliados if slot is not None)
                                         
                                         if custo > 0:
                                             if sangue_disponivel < custo:
@@ -193,24 +244,22 @@ class CenaCombate(CenaBase):
                                             self.estado_atual = "posicionamento"
                                             self.mensagem_debug = "POSICIONAMENTO: Escolha um slot aliado vazio."
                                 
-                                # FASE DE SELEÇÃO DE SACRIFÍCIO
                                 elif self.estado_atual == "sacrificio":
                                     for rect_slot, i in self.hitboxes_slots_aliados:
                                         if rect_slot.collidepoint(pos_mouse):
                                             if self.slots_aliados[i] is not None and i not in self.slots_sacrificados_pendentes:
                                                 self.slots_sacrificados_pendentes.append(i)
                                                 
-                                                sangue_acumulado = sum(self.slots_aliados[idx].get("valor_sacrificio", 1) for idx in self.slots_sacrificados_pendentes)
+                                                sangue_acumulado = sum(self.slots_aliados[idx].valor_sacrificio for idx in self.slots_sacrificados_pendentes)
                                                 
                                                 if sangue_acumulado >= self.sangue_necessario:
                                                     self.estado_atual = "posicionamento"
-                                                    self.mensagem_debug = f"Sacrifício pronto! Escolha onde baixar o {self.carta_selecionada['nome']}."
+                                                    self.mensagem_debug = f"Sacrifício pronto! Escolha onde baixar o {self.carta_selecionada.nome}."
                                                 else:
                                                     restante = self.sangue_necessario - sangue_acumulado
                                                     self.mensagem_debug = f"Marcado! Faltam mais {restante} de sangue."
                                             break
                                             
-                                # EFETIVAÇÃO REAL DO SACRIFÍCIO NO TABULEIRO
                                 elif self.estado_atual == "posicionamento":
                                     for rect_slot, i in self.hitboxes_slots_aliados:
                                         if rect_slot.collidepoint(pos_mouse):
@@ -259,26 +308,23 @@ class CenaCombate(CenaBase):
                 anim["pos_atual"][0] = x0 + (x1 - x0) * fator_suave
                 anim["pos_atual"][1] = y0 + (y1 - y0) * fator_suave
 
-        # --- MÁQUINA DE ESTADOS DO COMBATE SEQUENCIAL ---
         if self.turno_atual == "resolvendo_combate":
             
             # FASE 1: SEUS CARDS ATACAM
             if self.fase_resolucao == "aliados":
                 while self.idx_atacante_atual < 4:
                     card = self.slots_aliados[self.idx_atacante_atual]
-                    if card is not None and card.get("dano", 0) > 0:
+                    if card is not None and card.dano > 0:
                         break
                     self.idx_atacante_atual += 1
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
 
                 if self.idx_atacante_atual >= 4:
-                    # Seus ataques acabaram. Entra na fase de Transição/Cooldown do Inimigo
                     self.mensagem_debug = "Turno Aliado encerrado. Inimigo preparando jogadas..."
                     self.fase_resolucao = "pre_inimigo"
-                    self.tempo_espera_fase = 1000.0 # 1 segundo de pausa dramática/cooldown
+                    self.tempo_espera_fase = 1000.0 
                     
-                    # MECÂNICA PRINCIPAL: Cartas da memória descem se o slot estiver livre!
                     for i in range(4):
                         if self.slots_inimigos[i] is None and len(self.filas_espera_inimigas[i]) > 0:
                             self.slots_inimigos[i] = self.filas_espera_inimigas[i].pop(0)
@@ -290,12 +336,12 @@ class CenaCombate(CenaBase):
                 if self.progresso_ataque >= 0.5 and not self.dano_aplicado:
                     tem_alvo = self.slots_inimigos[self.idx_atacante_atual] is not None
                     if tem_alvo:
-                        self.slots_inimigos[self.idx_atacante_atual]["vida"] -= card_atacante["dano"]
+                        self.slots_inimigos[self.idx_atacante_atual].vida -= card_atacante.dano
                         self.flash_inimigo[self.idx_atacante_atual] = 200 
-                        if self.slots_inimigos[self.idx_atacante_atual]["vida"] <= 0:
+                        if self.slots_inimigos[self.idx_atacante_atual].vida <= 0:
                             self.slots_inimigos[self.idx_atacante_atual] = None
                     else:
-                        self.peso_balanca += card_atacante["dano"]
+                        self.peso_balanca += card_atacante.dano
                         if self.peso_balanca >= 8:
                             self.resultado = "vitoria"
                             self.mensagem_debug = "VITÓRIA! A balança tombou totalmente."
@@ -311,25 +357,23 @@ class CenaCombate(CenaBase):
             elif self.fase_resolucao == "pre_inimigo":
                 self.tempo_espera_fase -= dt
                 if self.tempo_espera_fase <= 0:
-                    # Processa efeitos que não sejam de invocação física (como o Ataque Especial do turno 4)
                     acoes_do_turno = self.script_inimigo.get(self.turno_global, [])
                     for comando in acoes_do_turno:
                         if comando["acao"] == "ataque_especial":
                             self.peso_balanca -= comando.get("dano_direto", 1)
                             self.mensagem_debug = f"Chefe usou: {comando.get('nome')}!"
                     
-                    # Avança de fato para o ataque físico dos monstros dele
                     self.fase_resolucao = "inimigos"
                     self.idx_atacante_atual = 0
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
                     self.mensagem_debug = "Inimigos avançam para atacar!"
 
-            # FASE 3: ATAQUE DOS CARDS INIMIGOS DO TABULEIRO PRINCIPAL
+            # FASE 3: ATAQUE DOS CARDS INIMIGOS
             elif self.fase_resolucao == "inimigos":
                 while self.idx_atacante_atual < 4:
                     card = self.slots_inimigos[self.idx_atacante_atual]
-                    if card is not None and card.get("dano", 0) > 0:
+                    if card is not None and card.dano > 0:
                         break
                     self.idx_atacante_atual += 1
                     self.progresso_ataque = 0.0
@@ -343,16 +387,13 @@ class CenaCombate(CenaBase):
                             self.mensagem_debug = "Você sucumbiu..."
                             return
 
-                    # Passagem de turno de forma limpa e organizada
                     self.turno_global += 1
                     self.turno_atual = "jogador"
                     self.ja_comprou_neste_turno = False 
                     self.estado_atual = "fase_compra"
                     self.fase_resolucao = None
                     
-                    # Pré-carrega na memória de cima o que virá no próximo round!
                     self._carregar_intencoes_inimigas_do_turno(self.turno_global)
-                    
                     self.mensagem_debug = "Seu Turno! Compre 1 carta para agir."
                     return
 
@@ -362,12 +403,12 @@ class CenaCombate(CenaBase):
                 if self.progresso_ataque >= 0.5 and not self.dano_aplicado:
                     tem_alvo = self.slots_aliados[self.idx_atacante_atual] is not None
                     if tem_alvo:
-                        self.slots_aliados[self.idx_atacante_atual]["vida"] -= card_atacante["dano"]
+                        self.slots_aliados[self.idx_atacante_atual].vida -= card_atacante.dano
                         self.flash_aliado[self.idx_atacante_atual] = 200
-                        if self.slots_aliados[self.idx_atacante_atual]["vida"] <= 0:
+                        if self.slots_aliados[self.idx_atacante_atual].vida <= 0:
                             self.slots_aliados[self.idx_atacante_atual] = None
                     else:
-                        self.peso_balanca -= card_atacante["dano"]
+                        self.peso_balanca -= card_atacante.dano
                         
                     self.dano_aplicado = True
 
@@ -389,14 +430,11 @@ class CenaCombate(CenaBase):
         
         pos_x_slot = 458
         largura_padrao, altura_padrao = 140, 190
-        altura_mini = 81 # Altura exata calculada (190 * 3/7)
+        altura_mini = 81 
 
         for i in range(4):
-            # Slots do campo superior (Memória/Antecipação de Invocação)
             self.hitboxes_slots_espera.append((pygame.Rect(pos_x_slot, 62, largura_padrao, altura_mini), i))
-            # Slots de Combate do Chefe (Tabuleiro ativo do Inimigo)
             self.hitboxes_slots_inimigos.append((pygame.Rect(pos_x_slot, 158, largura_padrao, altura_padrao), i))
-            # Seus Slots de Combate
             self.hitboxes_slots_aliados.append((pygame.Rect(pos_x_slot, 386, largura_padrao, altura_padrao), i))
             pos_x_slot += 158
             
@@ -501,25 +539,21 @@ class CenaCombate(CenaBase):
             pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
             pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2) 
             
-        # --- NOVO: EXIBIÇÃO DO CAMPO DE CIMA (MINI CARTAS DE MEMÓRIA) ---
+        # --- EXIBIÇÃO DO CAMPO DE CIMA (MINI CARTAS DE MEMÓRIA) ---
         for rect_mini, i in self.hitboxes_slots_espera:
-            # Traço pontilhado ou borda fina escura simulando o espaço reserva
             pygame.draw.rect(self.tela, (60, 45, 45), rect_mini, 1)
             
-            # Se houver uma carta na fila de espera desse slot, desenha de forma compacta
             fila = self.filas_espera_inimigas[i]
             if len(fila) > 0:
-                proxima_carta = fila[0] # Pega sempre a primeira da fila
+                proxima_carta = fila[0] 
                 
-                # Fundo cinza escuro sutil (aparência fantasmagórica/reserva)
                 pygame.draw.rect(self.tela, (45, 45, 50), rect_mini.inflate(-4, -4))
                 pygame.draw.rect(self.tela, (100, 80, 80), rect_mini.inflate(-4, -4), 2)
                 
-                # Textos miniaturizados de forma scannable
-                txt_nome = self.fonte_mini.render(proxima_carta["nome"], True, (200, 200, 200))
+                txt_nome = self.fonte_mini.render(proxima_carta.nome, True, (200, 200, 200))
                 self.tela.blit(txt_nome, (rect_mini.x + 8, rect_mini.y + 8))
                 
-                txt_status = self.fonte_mini.render(f"ATK:{proxima_carta.get('dano', 0)}  HP:{proxima_carta['vida']}", True, (160, 140, 140))
+                txt_status = self.fonte_mini.render(f"ATK:{proxima_carta.dano}  HP:{proxima_carta.vida}", True, (160, 140, 140))
                 self.tela.blit(txt_status, (rect_mini.x + 8, rect_mini.y + 45))
 
         # --- EXIBIÇÃO DOS SLOTS INIMIGOS PRINCIPAIS ---
@@ -537,11 +571,11 @@ class CenaCombate(CenaBase):
                 cor_corpo = (255, 30, 30) if self.flash_inimigo[i] > 0 else (200, 100, 100)
                 
                 pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-10, -10))
-                txt = self.fonte_cartas.render(self.slots_inimigos[i]['nome'], True, (255,255,255))
+                txt = self.fonte_cartas.render(self.slots_inimigos[i].nome, True, (255,255,255))
                 self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
-                txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_inimigos[i].get('dano', 0)}", True, (255, 255, 255))
+                txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_inimigos[i].dano}", True, (255, 255, 255))
                 self.tela.blit(txt_atk, (rect_desenho.x + 10, rect_desenho.y + 100))
-                txt_vida = self.fonte_cartas.render(f"HP: {self.slots_inimigos[i]['vida']}", True, (0,0,0))
+                txt_vida = self.fonte_cartas.render(f"HP: {self.slots_inimigos[i].vida}", True, (0,0,0))
                 self.tela.blit(txt_vida, (rect_desenho.x + 10, rect_desenho.y + 120))
                 
         # --- EXIBIÇÃO DOS SLOTS ALIADOS ---
@@ -587,13 +621,13 @@ class CenaCombate(CenaBase):
                 
                 pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-12, -12))
                 
-                txt = self.fonte_cartas.render(self.slots_aliados[i]['nome'], True, cor_texto)
+                txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
                 self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
                 
-                txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_aliados[i].get('dano', 0)}", True, (200, 0, 0) if not prometida_ao_abate and not esta_em_panico else cor_texto)
+                txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_aliados[i].dano}", True, (200, 0, 0) if not prometida_ao_abate and not esta_em_panico else cor_texto)
                 self.tela.blit(txt_atk, (rect_desenho.x + 10, rect_desenho.y + 100))
                 
-                txt_vida = self.fonte_cartas.render(f"HP: {self.slots_aliados[i]['vida']}", True, cor_texto)
+                txt_vida = self.fonte_cartas.render(f"HP: {self.slots_aliados[i].vida}", True, cor_texto)
                 self.tela.blit(txt_vida, (rect_desenho.x + 10, rect_desenho.y + 120))
         
         # --- MÃO DO JOGADOR ---
@@ -603,8 +637,8 @@ class CenaCombate(CenaBase):
                 pygame.draw.rect(self.tela, cor_fundo, rect_carta) 
                 pygame.draw.rect(self.tela, (0, 0, 0), rect_carta, 6) 
                 
-                txt_nome = self.fonte_cartas.render(carta['nome'], True, (0,0,0))
-                txt_custo = self.fonte_cartas.render(f"Custo: {carta.get('custo_sangue', 0)}", True, (200,0,0))
+                txt_nome = self.fonte_cartas.render(carta.nome, True, (0,0,0))
+                txt_custo = self.fonte_cartas.render(f"Custo: {carta.custo_sangue}", True, (200,0,0))
                 self.tela.blit(txt_nome, (rect_carta.x + 5, rect_carta.y + 10))
                 self.tela.blit(txt_custo, (rect_carta.x + 5, rect_carta.y + 40))
                 
@@ -613,8 +647,8 @@ class CenaCombate(CenaBase):
             pygame.draw.rect(self.tela, (255, 255, 220), rect_foco) 
             pygame.draw.rect(self.tela, (255, 50, 50), rect_foco, 8) 
             
-            txt_nome = self.fonte_cartas.render(carta_foco['nome'], True, (0,0,0))
-            txt_custo = self.fonte_cartas.render(f"Custo: {carta_foco.get('custo_sangue', 0)}", True, (200,0,0))
+            txt_nome = self.fonte_cartas.render(carta_foco.nome, True, (0,0,0))
+            txt_custo = self.fonte_cartas.render(f"Custo: {carta_foco.custo_sangue}", True, (200,0,0))
             self.tela.blit(txt_nome, (rect_foco.x + 5, rect_foco.y + 10))
             self.tela.blit(txt_custo, (rect_foco.x + 5, rect_foco.y + 40))
             
@@ -624,7 +658,7 @@ class CenaCombate(CenaBase):
             rect_render_anim = pygame.Rect(x_anim, y_anim, 140, 190)
             pygame.draw.rect(self.tela, (240, 240, 240), rect_render_anim)
             pygame.draw.rect(self.tela, (0, 0, 0), rect_render_anim, 6)
-            txt_nome = self.fonte_cartas.render(anim["carta"]['nome'], True, (0,0,0))
+            txt_nome = self.fonte_cartas.render(anim["carta"].nome, True, (0,0,0))
             self.tela.blit(txt_nome, (rect_render_anim.x + 5, rect_render_anim.y + 10))
 
         # --- BANNER DE AVISOS ---
@@ -635,7 +669,7 @@ class CenaCombate(CenaBase):
 
 
 # ==============================================================================
-# CARREGAMENTO DINÂMICO DO SEU ARQUIVO FASES.PY
+# SEÇÃO PRINCIPAL DE TESTE
 # ==============================================================================
 if __name__ == "__main__":
     pygame.init()
@@ -645,7 +679,6 @@ if __name__ == "__main__":
     pygame.display.set_caption("Inscryption Engine - Sistema de Antecipação de Turnos")
     relogio = pygame.time.Clock()
 
-    # Tenta importar as configurações reais direto do seu script fases.py
     try:
         from fases import fases_do_jogo
         mock_dados_fase = fases_do_jogo["boss_1"]
@@ -661,9 +694,8 @@ if __name__ == "__main__":
             }
         }
 
-    # Deck com o Urso Titã (Custo 3) para testar os novos sacrifícios dinâmicos
     mock_deck_jogador = [
-        {"nome": "Urso Titã", "dano": 5, "vida": 6, "custo_sangue": 3, "valor_sacrificio": 1}
+        Carta(nome="Urso Titã", poder=5, vida=6, imagem=None, custo_sangue=3, valor_sacrificio=1)
     ] 
 
     cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
