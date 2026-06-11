@@ -667,12 +667,7 @@ if __name__ == "__main__":
     ] 
 
     cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
-
-    # Coelhos iniciais do jogador para termos com o que testar sacrifício
-    cena_teste.slots_aliados[0] = {"nome": "Coelho A", "dano": 0, "vida": 1, "custo_sangue": 0, "valor_sacrificio": 1}
-    cena_teste.slots_aliados[1] = {"nome": "Coelho B", "dano": 0, "vida": 1, "custo_sangue": 0, "valor_sacrificio": 1}
-    cena_teste.slots_aliados[3] = {"nome": "Coelho C", "dano": 0, "vida": 1, "custo_sangue": 0, "valor_sacrificio": 1}
-
+    
     rodando = True
     while rodando:
         dt = relogio.tick(60) 
