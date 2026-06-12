@@ -725,7 +725,7 @@ if __name__ == "__main__":
         img_la_ursa = None
 
     mock_deck_jogador = [
-        Carta(nome="La Ursa", poder=5, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1)
+        Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=1, valor_sacrificio=1)
     ]
     
 
