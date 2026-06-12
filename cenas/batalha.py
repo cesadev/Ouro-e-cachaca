@@ -33,9 +33,7 @@ class Carta:
         return Carta(self.nome, self.poder, self.vida, self.imagem, self.custo_sangue, self.valor_sacrificio)
 
 
-# ==============================================================================
-# CENA DE COMBATE REFATORADA
-# ==============================================================================
+# cena de combate
 class CenaCombate(CenaBase):
     def __init__(self, tela, deck_jogador, dados_da_fase):
         super().__init__(tela) 
@@ -48,11 +46,11 @@ class CenaCombate(CenaBase):
         ]
         self.mao_jogador = [] 
         
-        # --- DADOS DA FASE ---
+        # dados fase
         self.id_combate = dados_da_fase.get("nome", "Combate Desconhecido")
         self.script_inimigo = dados_da_fase.get("script_inimigo", {})
         
-        # --- GERENCIADOR DE TURNOS E ESTADOS ---
+        # gerenciador de turnos
         self.turno_atual = "jogador"
         self.turno_global = 1 
         self.ja_comprou_neste_turno = False 
@@ -63,7 +61,7 @@ class CenaCombate(CenaBase):
         self.index_carta_selecionada = None
         self.sangue_necessario = 0
         
-        # --- SISTEMA DE SACRIFÍCIO PENDENTE ---
+        # sist sacrificio
         self.slots_sacrificados_pendentes = [] 
         
         # --- SISTEMA DE SEQUENCIAMENTO E COOLDOWN DE ATAQUES ---
@@ -133,9 +131,15 @@ class CenaCombate(CenaBase):
             self.imagem_fundo = pygame.Surface((largura_tela, altura_tela))
             self.imagem_fundo.fill((30, 30, 30))
 
+        try:
+            img_perna_original = pygame.image.load("assets/Perna.png").convert_alpha()
+            self.img_perna = pygame.transform.scale(img_perna_original, (140, 190))
+        except FileNotFoundError:
+            self.img_perna = None
+
         # --- HITBOXES FIXAS ---
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
-        self.comprar_coelho_rect = pygame.Rect(1190, 465, 140, 190)
+        self.comprar_pernas_rect = pygame.Rect(1190, 465, 140, 190)
         self.comprar_deck_rect = pygame.Rect(1350, 465, 140, 190)
         
         self.descricao_left_rect = pygame.Rect(1150, 130, 40, 40) 
@@ -187,14 +191,14 @@ class CenaCombate(CenaBase):
                     if self.turno_atual == "jogador":
                         comprou_agora = False
                         
-                        if self.comprar_coelho_rect.collidepoint(pos_mouse):
+                        if self.comprar_pernas_rect.collidepoint(pos_mouse):
                             if not self.ja_comprou_neste_turno and self.pernas_disponiveis > 0:
                                 # a parte do sacrificio da perna
-                                self.mao_jogador.append(Carta("Coelho", 0, 1, None, 0, 1))
+                                self.mao_jogador.append(Carta("Perna", 0, 1, self.img_perna, 0, 1))
                                 self.pernas_disponiveis -= 1
                                 self.ja_comprou_neste_turno = True
                                 comprou_agora = True
-                                self.mensagem_debug = "Coelho comprado!"
+                                self.mensagem_debug = "Perna na mão!"
                         
                         elif self.comprar_deck_rect.collidepoint(pos_mouse):
                             if not self.ja_comprou_neste_turno and len(self.deck_jogador) > 0:
@@ -502,7 +506,7 @@ class CenaCombate(CenaBase):
         
         # --- DECKS ---
         piscar = self.estado_atual == "fase_compra" and (pygame.time.get_ticks() % 1000 < 500)
-        cor_coelho_base = (200, 50, 50) if piscar else (255, 105, 97)
+        cor_pernas_base = (200, 50, 50) if piscar else (255, 105, 97)
         cor_deck_base = (120, 150, 160) if piscar else (174, 198, 207)
 
         def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado):
@@ -520,9 +524,9 @@ class CenaCombate(CenaBase):
                 self.tela.blit(carta_rot, rect_final)
 
         if self.pernas_disponiveis > 0:
-            desenhar_pilha(self.comprar_coelho_rect, self.pernas_disponiveis, self.bagunca_pernas, cor_coelho_base, self.ja_comprou_neste_turno)
+            desenhar_pilha(self.comprar_pernas_rect, self.pernas_disponiveis, self.bagunca_pernas, cor_pernas_base, self.ja_comprou_neste_turno)
         else:
-            pygame.draw.rect(self.tela, (50, 50, 50), self.comprar_coelho_rect)
+            pygame.draw.rect(self.tela, (50, 50, 50), self.comprar_pernas_rect)
 
         if len(self.deck_jogador) > 0:
             desenhar_pilha(self.comprar_deck_rect, len(self.deck_jogador), self.bagunca_deck, cor_deck_base, self.ja_comprou_neste_turno)
@@ -636,7 +640,7 @@ class CenaCombate(CenaBase):
                 txt_vida = self.fonte_cartas.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
                 self.tela.blit(txt_vida, (rect_desenho.x + 85, rect_desenho.y + 160))
     
-        # --- MÃO DO JOGADOR ---
+        # MÃO DO JOGADOR
         for rect_carta, carta, i in self.hitboxes_mao:
             if i != self.index_foco:
                 if carta.imagem is not None:
@@ -650,7 +654,10 @@ class CenaCombate(CenaBase):
                     self.tela.blit(txt_nome, (rect_carta.x + 5, rect_carta.y + 10))
                     self.tela.blit(txt_custo, (rect_carta.x + 5, rect_carta.y + 40))
                 
-                pygame.draw.rect(self.tela, (0, 0, 0), rect_carta, 6) 
+
+                # isso aqui vai ser somente pra fazer o texto aparecer quando estiver na mão
+                txt_vida_mao = self.fonte_cartas.render(f"{carta.vida}", True, (54, 32, 10))
+                self.tela.blit(txt_vida_mao, (rect_carta.x + 108, rect_carta.y + 148))
                 
         if self.index_foco is not None and self.index_foco < len(self.hitboxes_mao):
             rect_foco, carta_foco, _ = self.hitboxes_mao[self.index_foco]
@@ -665,7 +672,9 @@ class CenaCombate(CenaBase):
                 self.tela.blit(txt_nome, (rect_foco.x + 5, rect_foco.y + 10))
                 self.tela.blit(txt_custo, (rect_foco.x + 5, rect_foco.y + 40))
             
-            pygame.draw.rect(self.tela, (255, 50, 50), rect_foco, 8)
+            # esse daqui é quando o mouse tá em cima  
+            txt_vida_foco = self.fonte_cartas.render(f"{carta_foco.vida}", True, (54, 32, 10))
+            self.tela.blit(txt_vida_foco, (rect_foco.x + 108, rect_foco.y + 148))
             
         # --- TRAJETÓRIA DE ENTRADA ---
         for anim in self.animacoes:
