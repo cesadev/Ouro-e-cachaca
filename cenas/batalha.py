@@ -386,8 +386,9 @@ class CenaCombate(CenaBase):
                 if self.idx_atacante_atual >= 4:
                     if self.peso_balanca <= -8:
                         self.vida_player -= 1
+                        self.resultado = "derrota"
+                        self.mensagem_debug = "Você perdeu."
                         if self.vida_player <= 0:
-                            self.resultado = "derrota"
                             self.mensagem_debug = "Você sucumbiu..."
                             return
 
@@ -396,9 +397,9 @@ class CenaCombate(CenaBase):
                     self.ja_comprou_neste_turno = False 
                     self.estado_atual = "fase_compra"
                     self.fase_resolucao = None
-                    
-                    self._carregar_intencoes_inimigas_do_turno(self.turno_global)
-                    self.mensagem_debug = "Seu Turno! Compre 1 carta para agir."
+                    if self.resultado != "derrota":
+                        self._carregar_intencoes_inimigas_do_turno(self.turno_global)
+                        self.mensagem_debug = "Seu Turno! Compre 1 carta para agir."
                     return
 
                 card_atacante = self.slots_inimigos[self.idx_atacante_atual]
