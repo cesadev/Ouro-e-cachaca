@@ -729,7 +729,7 @@ if __name__ == "__main__":
             "obstaculos_iniciais": [{"slot": 2, "nome": "Tronco", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
             "script_inimigo": {
                 1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1, "imagem": img_capelobo}, "slot": 0}],
-                2: [{"acao": "jogar_carta", "carta": {"nome": "timbu", "vida": 1, "dano": 1, "imagem": img_timbu}, "slot": 3}],
+                2: [{"acao": "jogar_carta", "carta": {"nome": "Timbu", "vida": 2, "dano": 2, "imagem": img_timbu}, "slot": 3}],
                 4: [{"acao": "ataque_especial", "nome": "Puxão master das trevas", "dano_direto": 1}]
             }
         }
