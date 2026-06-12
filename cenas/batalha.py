@@ -3,39 +3,37 @@ import math
 import random
 from cena_base import CenaBase
 
-# ==============================================================================
-# NOVA CLASSE CARTA
-# ==============================================================================
 class Carta:
     def __init__(self, nome, poder, vida, imagem=None, custo_sangue=0, valor_sacrificio=1):
         self.nome = nome
         self.poder = poder
-        self.dano = poder  # Mantém compatibilidade com a engine que usa "dano"
+        self.dano = poder  
         self.vida = vida
         self.custo_sangue = custo_sangue
         self.valor_sacrificio = valor_sacrificio
         
-        # Se nenhuma imagem for passada, cria um rect/fundo padrão para não quebrar o Pygame
-        if imagem is None:
-            self.imagem = pygame.Surface((140, 190), pygame.SRCALPHA)
-            self.imagem.fill((255, 255, 255))
+        self.imagem = imagem
+
+        if self.imagem is not None:
+            self.rect = self.imagem.get_rect()
         else:
-            self.imagem = imagem
-            
-        self.rect = self.imagem.get_rect()
+            self.rect = pygame.Rect(0, 0, 140, 190)
 
     def desenhar(self, tela, posicao_x, posicao_y):
         self.rect.topleft = (posicao_x, posicao_y)
-        tela.blit(self.imagem, self.rect)
+        if self.imagem is not None:
+            tela.blit(self.imagem, self.rect)
+        else:
+            pygame.draw.rect(tela, (255, 255, 255), self.rect) 
+            pygame.draw.rect(tela, (0, 0, 0), self.rect, 3)
+        
         
     def copy(self):
         """Retorna uma cópia real da instância da carta (essencial para invocações)"""
         return Carta(self.nome, self.poder, self.vida, self.imagem, self.custo_sangue, self.valor_sacrificio)
 
 
-# ==============================================================================
-# CENA DE COMBATE REFATORADA
-# ==============================================================================
+# cena de combate
 class CenaCombate(CenaBase):
     def __init__(self, tela, deck_jogador, dados_da_fase):
         super().__init__(tela) 
@@ -48,11 +46,11 @@ class CenaCombate(CenaBase):
         ]
         self.mao_jogador = [] 
         
-        # --- DADOS DA FASE ---
+        # dados fase
         self.id_combate = dados_da_fase.get("nome", "Combate Desconhecido")
         self.script_inimigo = dados_da_fase.get("script_inimigo", {})
         
-        # --- GERENCIADOR DE TURNOS E ESTADOS ---
+        # gerenciador de turnos
         self.turno_atual = "jogador"
         self.turno_global = 1 
         self.ja_comprou_neste_turno = False 
@@ -63,7 +61,7 @@ class CenaCombate(CenaBase):
         self.index_carta_selecionada = None
         self.sangue_necessario = 0
         
-        # --- SISTEMA DE SACRIFÍCIO PENDENTE ---
+        # sist sacrificio
         self.slots_sacrificados_pendentes = [] 
         
         # --- SISTEMA DE SEQUENCIAMENTO E COOLDOWN DE ATAQUES ---
@@ -103,12 +101,12 @@ class CenaCombate(CenaBase):
         self._carregar_intencoes_inimigas_do_turno(1)
         
         # --- RECURSOS AND BALANÇA ---
-        self.coelhos_disponiveis = 10 
+        self.pernas_disponiveis = 10 
         self.vida_player = 2 
         self.peso_balanca = 0 
         self.resultado = None
         
-        # --- BAGUNÇA VISUAL DOS DECKS ---
+        # decks
         def gerar_bagunca_cumulativa(quantidade):
             desvios = []
             x_atual, y_atual = 0.0, 0.0
@@ -121,7 +119,7 @@ class CenaCombate(CenaBase):
                 desvios.append((int(x_atual), int(y_atual), angulo))
             return desvios
         
-        self.bagunca_coelhos = gerar_bagunca_cumulativa(15)
+        self.bagunca_pernas = gerar_bagunca_cumulativa(15)
         self.bagunca_deck = gerar_bagunca_cumulativa(40)
         
         largura_tela, altura_tela = tela.get_size()
@@ -133,9 +131,15 @@ class CenaCombate(CenaBase):
             self.imagem_fundo = pygame.Surface((largura_tela, altura_tela))
             self.imagem_fundo.fill((30, 30, 30))
 
+        try:
+            img_perna_original = pygame.image.load("assets/Perna.png").convert_alpha()
+            self.img_perna = pygame.transform.scale(img_perna_original, (140, 190))
+        except FileNotFoundError:
+            self.img_perna = None
+
         # --- HITBOXES FIXAS ---
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
-        self.comprar_coelho_rect = pygame.Rect(1190, 465, 140, 190)
+        self.comprar_pernas_rect = pygame.Rect(1190, 465, 140, 190)
         self.comprar_deck_rect = pygame.Rect(1350, 465, 140, 190)
         
         self.descricao_left_rect = pygame.Rect(1150, 130, 40, 40) 
@@ -187,14 +191,14 @@ class CenaCombate(CenaBase):
                     if self.turno_atual == "jogador":
                         comprou_agora = False
                         
-                        if self.comprar_coelho_rect.collidepoint(pos_mouse):
-                            if not self.ja_comprou_neste_turno and self.coelhos_disponiveis > 0:
-                                # Instancia o Coelho usando a nova Classe Carta
-                                self.mao_jogador.append(Carta("Coelho", 0, 1, None, 0, 1))
-                                self.coelhos_disponiveis -= 1
+                        if self.comprar_pernas_rect.collidepoint(pos_mouse):
+                            if not self.ja_comprou_neste_turno and self.pernas_disponiveis > 0:
+                                # a parte do sacrificio da perna
+                                self.mao_jogador.append(Carta("Perna", 0, 1, self.img_perna, 0, 1))
+                                self.pernas_disponiveis -= 1
                                 self.ja_comprou_neste_turno = True
                                 comprou_agora = True
-                                self.mensagem_debug = "Coelho comprado!"
+                                self.mensagem_debug = "Perna na mão!"
                         
                         elif self.comprar_deck_rect.collidepoint(pos_mouse):
                             if not self.ja_comprou_neste_turno and len(self.deck_jogador) > 0:
@@ -382,8 +386,9 @@ class CenaCombate(CenaBase):
                 if self.idx_atacante_atual >= 4:
                     if self.peso_balanca <= -8:
                         self.vida_player -= 1
+                        self.resultado = "derrota"
+                        self.mensagem_debug = "Você perdeu."
                         if self.vida_player <= 0:
-                            self.resultado = "derrota"
                             self.mensagem_debug = "Você sucumbiu..."
                             return
 
@@ -392,9 +397,9 @@ class CenaCombate(CenaBase):
                     self.ja_comprou_neste_turno = False 
                     self.estado_atual = "fase_compra"
                     self.fase_resolucao = None
-                    
-                    self._carregar_intencoes_inimigas_do_turno(self.turno_global)
-                    self.mensagem_debug = "Seu Turno! Compre 1 carta para agir."
+                    if self.resultado != "derrota":
+                        self._carregar_intencoes_inimigas_do_turno(self.turno_global)
+                        self.mensagem_debug = "Seu Turno! Compre 1 carta para agir."
                     return
 
                 card_atacante = self.slots_inimigos[self.idx_atacante_atual]
@@ -502,7 +507,7 @@ class CenaCombate(CenaBase):
         
         # --- DECKS ---
         piscar = self.estado_atual == "fase_compra" and (pygame.time.get_ticks() % 1000 < 500)
-        cor_coelho_base = (200, 50, 50) if piscar else (255, 105, 97)
+        cor_pernas_base = (200, 50, 50) if piscar else (255, 105, 97)
         cor_deck_base = (120, 150, 160) if piscar else (174, 198, 207)
 
         def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado):
@@ -519,10 +524,10 @@ class CenaCombate(CenaBase):
                 rect_final.y += (off_y - (i * 2)) 
                 self.tela.blit(carta_rot, rect_final)
 
-        if self.coelhos_disponiveis > 0:
-            desenhar_pilha(self.comprar_coelho_rect, self.coelhos_disponiveis, self.bagunca_coelhos, cor_coelho_base, self.ja_comprou_neste_turno)
+        if self.pernas_disponiveis > 0:
+            desenhar_pilha(self.comprar_pernas_rect, self.pernas_disponiveis, self.bagunca_pernas, cor_pernas_base, self.ja_comprou_neste_turno)
         else:
-            pygame.draw.rect(self.tela, (50, 50, 50), self.comprar_coelho_rect)
+            pygame.draw.rect(self.tela, (50, 50, 50), self.comprar_pernas_rect)
 
         if len(self.deck_jogador) > 0:
             desenhar_pilha(self.comprar_deck_rect, len(self.deck_jogador), self.bagunca_deck, cor_deck_base, self.ja_comprou_neste_turno)
@@ -556,7 +561,7 @@ class CenaCombate(CenaBase):
                 txt_status = self.fonte_mini.render(f"ATK:{proxima_carta.dano}  HP:{proxima_carta.vida}", True, (160, 140, 140))
                 self.tela.blit(txt_status, (rect_mini.x + 8, rect_mini.y + 45))
 
-        # --- EXIBIÇÃO DOS SLOTS INIMIGOS PRINCIPAIS ---
+        # Coisas dos inimigos
         for rect_slot, i in self.hitboxes_slots_inimigos:
             rect_desenho = rect_slot.copy()
             
@@ -575,10 +580,11 @@ class CenaCombate(CenaBase):
                 self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
                 txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_inimigos[i].dano}", True, (255, 255, 255))
                 self.tela.blit(txt_atk, (rect_desenho.x + 10, rect_desenho.y + 100))
-                txt_vida = self.fonte_cartas.render(f"HP: {self.slots_inimigos[i].vida}", True, (0,0,0))
-                self.tela.blit(txt_vida, (rect_desenho.x + 10, rect_desenho.y + 120))
+
+                txt_vida = self.fonte_cartas.render(f"{self.slots_inimigos[i].vida}", True, (54, 32, 10))
+                self.tela.blit(txt_vida, (rect_desenho.x + 108, rect_desenho.y + 148))
                 
-        # --- EXIBIÇÃO DOS SLOTS ALIADOS ---
+        # slots cartas player
         for rect_slot, i in self.hitboxes_slots_aliados:
             cor_borda = (50, 150, 50) 
             rect_desenho = rect_slot.copy()
@@ -613,44 +619,63 @@ class CenaCombate(CenaBase):
             
             if self.slots_aliados[i]:
                 if prometida_ao_abate:
-                    cor_corpo = (60, 63, 65) 
                     cor_texto = (140, 140, 140)
                 else:
-                    cor_corpo = (255, 30, 30) if self.flash_aliado[i] > 0 else ((100, 200, 100) if not esta_em_panico else (160, 80, 80))
                     cor_texto = (0,0,0) if not esta_em_panico else (255,255,255)
+
+                if self.slots_aliados[i].imagem is not None:
+                    img_campo = pygame.transform.scale(self.slots_aliados[i].imagem, (128, 178))
+                    self.tela.blit(img_campo, (rect_desenho.x + 6, rect_desenho.y + 6))
+                else:
+                    if prometida_ao_abate:
+                        cor_corpo = (60, 63, 65) 
+                    else:
+                        cor_corpo = (255, 30, 30) if self.flash_aliado[i] > 0 else ((100, 200, 100) if not esta_em_panico else (160, 80, 80))
+                    
+                    pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-12, -12))
+                    txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
+                    self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
                 
-                pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-12, -12))
-                
-                txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
-                self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
-                
-                txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_aliados[i].dano}", True, (200, 0, 0) if not prometida_ao_abate and not esta_em_panico else cor_texto)
-                self.tela.blit(txt_atk, (rect_desenho.x + 10, rect_desenho.y + 100))
-                
-                txt_vida = self.fonte_cartas.render(f"HP: {self.slots_aliados[i].vida}", True, cor_texto)
-                self.tela.blit(txt_vida, (rect_desenho.x + 10, rect_desenho.y + 120))
-        
-        # --- MÃO DO JOGADOR ---
+                    
+                cor_vida = (200, 0, 0) if prometida_ao_abate or esta_em_panico else (54, 32, 10)    
+                txt_vida = self.fonte_cartas.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
+                self.tela.blit(txt_vida, (rect_desenho.x + 85, rect_desenho.y + 160))
+    
+        # MÃO DO JOGADOR
         for rect_carta, carta, i in self.hitboxes_mao:
             if i != self.index_foco:
-                cor_fundo = (255, 255, 200) if (self.estado_atual != "normal" and self.estado_atual != "fase_compra" and i == self.index_carta_selecionada) else (255, 255, 255)
-                pygame.draw.rect(self.tela, cor_fundo, rect_carta) 
-                pygame.draw.rect(self.tela, (0, 0, 0), rect_carta, 6) 
+                if carta.imagem is not None:
+                    self.tela.blit(carta.imagem, rect_carta)
+                else:
+                    cor_fundo = (255, 255, 200) if (self.estado_atual != "normal" and self.estado_atual != "fase_compra" and i == self.index_carta_selecionada) else (255, 255, 255)
+                    pygame.draw.rect(self.tela, cor_fundo, rect_carta) 
+                    
+                    txt_nome = self.fonte_cartas.render(carta.nome, True, (0,0,0))
+                    txt_custo = self.fonte_cartas.render(f"Custo: {carta.custo_sangue}", True, (200,0,0))
+                    self.tela.blit(txt_nome, (rect_carta.x + 5, rect_carta.y + 10))
+                    self.tela.blit(txt_custo, (rect_carta.x + 5, rect_carta.y + 40))
                 
-                txt_nome = self.fonte_cartas.render(carta.nome, True, (0,0,0))
-                txt_custo = self.fonte_cartas.render(f"Custo: {carta.custo_sangue}", True, (200,0,0))
-                self.tela.blit(txt_nome, (rect_carta.x + 5, rect_carta.y + 10))
-                self.tela.blit(txt_custo, (rect_carta.x + 5, rect_carta.y + 40))
+
+                # isso aqui vai ser somente pra fazer o texto aparecer quando estiver na mão
+                txt_vida_mao = self.fonte_cartas.render(f"{carta.vida}", True, (54, 32, 10))
+                self.tela.blit(txt_vida_mao, (rect_carta.x + 108, rect_carta.y + 148))
                 
         if self.index_foco is not None and self.index_foco < len(self.hitboxes_mao):
             rect_foco, carta_foco, _ = self.hitboxes_mao[self.index_foco]
-            pygame.draw.rect(self.tela, (255, 255, 220), rect_foco) 
-            pygame.draw.rect(self.tela, (255, 50, 50), rect_foco, 8) 
             
-            txt_nome = self.fonte_cartas.render(carta_foco.nome, True, (0,0,0))
-            txt_custo = self.fonte_cartas.render(f"Custo: {carta_foco.custo_sangue}", True, (200,0,0))
-            self.tela.blit(txt_nome, (rect_foco.x + 5, rect_foco.y + 10))
-            self.tela.blit(txt_custo, (rect_foco.x + 5, rect_foco.y + 40))
+            if carta_foco.imagem is not None:
+                self.tela.blit(carta_foco.imagem, rect_foco)
+            else:
+                pygame.draw.rect(self.tela, (255, 255, 220), rect_foco) 
+                
+                txt_nome = self.fonte_cartas.render(carta_foco.nome, True, (0,0,0))
+                txt_custo = self.fonte_cartas.render(f"Custo: {carta_foco.custo_sangue}", True, (200,0,0))
+                self.tela.blit(txt_nome, (rect_foco.x + 5, rect_foco.y + 10))
+                self.tela.blit(txt_custo, (rect_foco.x + 5, rect_foco.y + 40))
+            
+            # esse daqui é quando o mouse tá em cima  
+            txt_vida_foco = self.fonte_cartas.render(f"{carta_foco.vida}", True, (54, 32, 10))
+            self.tela.blit(txt_vida_foco, (rect_foco.x + 108, rect_foco.y + 148))
             
         # --- TRAJETÓRIA DE ENTRADA ---
         for anim in self.animacoes:
@@ -693,10 +718,16 @@ if __name__ == "__main__":
                 4: [{"acao": "ataque_especial", "nome": "Puxão master das trevas", "dano_direto": 1}]
             }
         }
+    try:
+        img_la_ursa_original = pygame.image.load("assets/LaUrsa.png").convert_alpha()
+        img_la_ursa = pygame.transform.scale(img_la_ursa_original, (140, 190))
+    except FileNotFoundError:
+        img_la_ursa = None
 
     mock_deck_jogador = [
-        Carta(nome="Urso Titã", poder=5, vida=6, imagem=None, custo_sangue=3, valor_sacrificio=1)
-    ] 
+        Carta(nome="La Ursa", poder=5, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1)
+    ]
+    
 
     cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
     
