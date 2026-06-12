@@ -422,7 +422,7 @@ class CenaCombate(CenaBase):
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
 
-        # --- CONSTRUÇÃO DE RECTs DINÂMICOS ---
+        # Construção dos retangulos
         self.hitboxes_vida.clear()
         pos_x_vida, pos_y_vida, tamanho_vida, espacamento_vida = 145, 505, 80, 20
         for i in range(self.vida_player):
@@ -434,14 +434,18 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_espera.clear()
         
         pos_x_slot = 458
-        largura_padrao, altura_padrao = 140, 190
-        altura_mini = 81 
-
+        y_espera = 62
+        y_inimigos = 158
+        y_aliados = 408
+        
+        espacamento_horizontal = 160
+        largura_padrao, altura_padrao = 144, 176 
+        altura_mini = 81
         for i in range(4):
-            self.hitboxes_slots_espera.append((pygame.Rect(pos_x_slot, 62, largura_padrao, altura_mini), i))
-            self.hitboxes_slots_inimigos.append((pygame.Rect(pos_x_slot, 158, largura_padrao, altura_padrao), i))
-            self.hitboxes_slots_aliados.append((pygame.Rect(pos_x_slot, 386, largura_padrao, altura_padrao), i))
-            pos_x_slot += 158
+            self.hitboxes_slots_espera.append((pygame.Rect(pos_x_slot, y_espera, largura_padrao, altura_mini), i))
+            self.hitboxes_slots_inimigos.append((pygame.Rect(pos_x_slot, y_inimigos, largura_padrao, altura_padrao), i))
+            self.hitboxes_slots_aliados.append((pygame.Rect(pos_x_slot, y_aliados, largura_padrao, altura_padrao), i))
+            pos_x_slot += espacamento_horizontal
             
         self.hitboxes_itens.clear()
         pos_x_inicial_item = 1190
@@ -582,7 +586,7 @@ class CenaCombate(CenaBase):
                 self.tela.blit(txt_atk, (rect_desenho.x + 10, rect_desenho.y + 100))
 
                 txt_vida = self.fonte_cartas.render(f"{self.slots_inimigos[i].vida}", True, (54, 32, 10))
-                self.tela.blit(txt_vida, (rect_desenho.x + 108, rect_desenho.y + 148))
+                self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
                 
         # slots cartas player
         for rect_slot, i in self.hitboxes_slots_aliados:
@@ -614,23 +618,14 @@ class CenaCombate(CenaBase):
 
             if prometida_ao_abate or esta_em_panico:
                 pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
-            else:
-                pygame.draw.rect(self.tela, cor_borda, rect_desenho, 6 if cor_borda != (50,150,50) else 4) 
             
-            if self.slots_aliados[i]:
-                if prometida_ao_abate:
-                    cor_texto = (140, 140, 140)
-                else:
-                    cor_texto = (0,0,0) if not esta_em_panico else (255,255,255)
+            if self.slots_aliados[i] and not prometida_ao_abate:
+                cor_texto = (0,0,0) if not esta_em_panico else (255,255,255)
 
                 if self.slots_aliados[i].imagem is not None:
-                    img_campo = pygame.transform.scale(self.slots_aliados[i].imagem, (128, 178))
-                    self.tela.blit(img_campo, (rect_desenho.x + 6, rect_desenho.y + 6))
+                    self.tela.blit(self.slots_aliados[i].imagem, (rect_desenho.x, rect_desenho.y-4))                
                 else:
-                    if prometida_ao_abate:
-                        cor_corpo = (60, 63, 65) 
-                    else:
-                        cor_corpo = (255, 30, 30) if self.flash_aliado[i] > 0 else ((100, 200, 100) if not esta_em_panico else (160, 80, 80))
+                    cor_corpo = (255, 30, 30) if self.flash_aliado[i] > 0 else ((100, 200, 100) if not esta_em_panico else (160, 80, 80))
                     
                     pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-12, -12))
                     txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
@@ -658,7 +653,7 @@ class CenaCombate(CenaBase):
 
                 # isso aqui vai ser somente pra fazer o texto aparecer quando estiver na mão
                 txt_vida_mao = self.fonte_cartas.render(f"{carta.vida}", True, (54, 32, 10))
-                self.tela.blit(txt_vida_mao, (rect_carta.x + 108, rect_carta.y + 148))
+                self.tela.blit(txt_vida_mao, (rect_carta.x + 112, rect_carta.y + 144))
                 
         if self.index_foco is not None and self.index_foco < len(self.hitboxes_mao):
             rect_foco, carta_foco, _ = self.hitboxes_mao[self.index_foco]
@@ -675,16 +670,22 @@ class CenaCombate(CenaBase):
             
             # esse daqui é quando o mouse tá em cima  
             txt_vida_foco = self.fonte_cartas.render(f"{carta_foco.vida}", True, (54, 32, 10))
-            self.tela.blit(txt_vida_foco, (rect_foco.x + 108, rect_foco.y + 148))
+            self.tela.blit(txt_vida_foco, (rect_foco.x + 112, rect_foco.y + 144))
             
-        # --- TRAJETÓRIA DE ENTRADA ---
+        #Trajetoria de entrada
         for anim in self.animacoes:
             x_anim, y_anim = anim["pos_atual"]
             rect_render_anim = pygame.Rect(x_anim, y_anim, 140, 190)
-            pygame.draw.rect(self.tela, (240, 240, 240), rect_render_anim)
-            pygame.draw.rect(self.tela, (0, 0, 0), rect_render_anim, 6)
-            txt_nome = self.fonte_cartas.render(anim["carta"].nome, True, (0,0,0))
-            self.tela.blit(txt_nome, (rect_render_anim.x + 5, rect_render_anim.y + 10))
+            carta_anim = anim["carta"]
+            
+            if carta_anim.imagem is not None:
+                self.tela.blit(carta_anim.imagem, rect_render_anim)
+            else:
+                # Se não tiver imagem, faz o quadrado branco padrão
+                pygame.draw.rect(self.tela, (240, 240, 240), rect_render_anim)
+                pygame.draw.rect(self.tela, (0, 0, 0), rect_render_anim, 6)
+                txt_nome = self.fonte_cartas.render(carta_anim.nome, True, (0,0,0))
+                self.tela.blit(txt_nome, (rect_render_anim.x + 5, rect_render_anim.y + 10))
 
         # --- BANNER DE AVISOS ---
         texto_surface = self.debug.render(self.mensagem_debug, True, (255, 255, 255))
@@ -693,9 +694,9 @@ class CenaCombate(CenaBase):
         self.tela.blit(texto_surface, rect_texto)
 
 
-# ==============================================================================
+
 # SEÇÃO PRINCIPAL DE TESTE
-# ==============================================================================
+
 if __name__ == "__main__":
     pygame.init()
     
@@ -708,24 +709,49 @@ if __name__ == "__main__":
         from fases import fases_do_jogo
         mock_dados_fase = fases_do_jogo["boss_1"]
     except ModuleNotFoundError:
+        try:
+            img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
+            img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
+            img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
+            img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
+            img_leao = pygame.image.load("assets/leao.png").convert_alpha()
+            img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
+        except FileNotFoundError:
+            img_capelobo = None
+            img_la_ursa = None
+            img_anhanga = None
+            img_leao = None
+            img_cobra_coral = None
+            img_timbu = None
         print("fases.py não encontrado. Rodando em modo de segurança com dados locais.")
         mock_dados_fase = {
             "nome": "o lenhador brabo (Failsafe)",
             "obstaculos_iniciais": [{"slot": 2, "nome": "Tronco", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
             "script_inimigo": {
-                1: [{"acao": "jogar_carta", "carta": {"nome": "Lobo", "vida": 2, "dano": 2}, "slot": 0}],
-                2: [{"acao": "jogar_carta", "carta": {"nome": "Corvo", "vida": 1, "dano": 1}, "slot": 3}],
+                1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1, "imagem": img_capelobo}, "slot": 0}],
+                2: [{"acao": "jogar_carta", "carta": {"nome": "timbu", "vida": 1, "dano": 1, "imagem": img_timbu}, "slot": 3}],
                 4: [{"acao": "ataque_especial", "nome": "Puxão master das trevas", "dano_direto": 1}]
             }
         }
     try:
-        img_la_ursa_original = pygame.image.load("assets/LaUrsa.png").convert_alpha()
-        img_la_ursa = pygame.transform.scale(img_la_ursa_original, (140, 190))
+
+        img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
+        img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
+        img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
+        img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
+        img_leao = pygame.image.load("assets/leao.png").convert_alpha()
+        img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
     except FileNotFoundError:
+        img_capelobo = None
         img_la_ursa = None
+        img_anhanga = None
+        img_leao = None
+        img_cobra_coral = None
+        img_timbu = None
 
     mock_deck_jogador = [
-        Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=1, valor_sacrificio=1)
+        Carta(nome="Capelobo", poder = 1, vida=3, imagem= img_capelobo, custo_sangue=1, valor_sacrificio=1),
+        Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
     ]
     
 
