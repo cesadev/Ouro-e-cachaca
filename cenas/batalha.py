@@ -422,14 +422,14 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_espera.clear()
         
         # alinhamento das cartas
-        pos_x_slot = 466        
-        y_espera = 66
-        y_inimigos = 166
-        y_aliados = 398
+        pos_x_slot = 458
+        y_espera = 32
+        y_inimigos = 158
+        y_aliados = 408
         
-        espacamento_horizontal = 164
+        espacamento_horizontal = 160
         largura_padrao, altura_padrao = 144, 176 
-        altura_mini = 81
+        altura_mini = 101
         
         for i in range(4):
             self.hitboxes_slots_espera.append((pygame.Rect(pos_x_slot, y_espera, largura_padrao, altura_mini), i))
@@ -541,7 +541,7 @@ class CenaCombate(CenaBase):
                 proxima_carta = fila[0] 
                 
                 if proxima_carta.imagem is not None:
-                    topo_carta = proxima_carta.imagem.subsurface((0, 0, 144, 81))
+                    topo_carta = proxima_carta.imagem.subsurface((0, 75, 144, 101))
                     self.tela.blit(topo_carta, rect_mini)
                     pygame.draw.rect(self.tela, (100, 80, 80), rect_mini, 2)
                 else:
