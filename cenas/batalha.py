@@ -72,7 +72,7 @@ class CenaCombate(CenaBase):
         self.slots_inimigos = [None, None, None, None]
         self.filas_espera_inimigas = [[], [], [], []]
         
-        # --- CARREGAMENTO AUTOMÁTICO DE OBSTÁCULOS ---
+        # carregamento dos obstaculos
         for obstaculo in dados_da_fase.get("obstaculos_iniciais", []):
             nome_obs = obstaculo["nome"]
             imagem_obs = obstaculo.get("imagem")
@@ -156,7 +156,7 @@ class CenaCombate(CenaBase):
                     nome_inimigo = c["nome"]
                     imagem_inimigo = c.get("imagem")
                     
-                    # --- MAGIA DE CARREGAMENTO AUTOMÁTICO PARA INIMIGOS ---
+                    # carregamento automatico das imagens dos inimigos
                     if imagem_inimigo is None:
                         try:
                             img_original = pygame.image.load(f"assets/{nome_inimigo}.png").convert_alpha()
@@ -421,7 +421,7 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_inimigos.clear()
         self.hitboxes_slots_espera.clear()
         
-        # --- ALINHAMENTO DAS CARTAS ---
+        # alinhamento das cartas
         pos_x_slot = 466        
         y_espera = 66
         y_inimigos = 166
@@ -532,7 +532,7 @@ class CenaCombate(CenaBase):
             pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
             pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2) 
             
-        # --- MINI CARTAS DE MEMÓRIA (COM IMAGEM) ---
+        # mini cartas
         for rect_mini, i in self.hitboxes_slots_espera:
             pygame.draw.rect(self.tela, (60, 45, 45), rect_mini, 1)
             
@@ -554,7 +554,7 @@ class CenaCombate(CenaBase):
                     txt_status = self.fonte_mini.render(f"ATK:{proxima_carta.dano}  HP:{proxima_carta.vida}", True, (160, 140, 140))
                     self.tela.blit(txt_status, (rect_mini.x + 8, rect_mini.y + 45))
 
-        # --- CARTAS INIMIGAS NO TABULEIRO ---
+        # cartas inimigos
         for rect_slot, i in self.hitboxes_slots_inimigos:
             rect_desenho = rect_slot.copy()
             
@@ -576,7 +576,7 @@ class CenaCombate(CenaBase):
                 txt_vida = self.fonte_vida.render(f"{self.slots_inimigos[i].vida}", True, (54, 32, 10))
                 self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
                 
-        # --- CARTAS ALIADAS NO TABULEIRO ---
+        # cartas do player no tabuleiro
         for rect_slot, i in self.hitboxes_slots_aliados:
             rect_desenho = rect_slot.copy()
             esta_em_panico = False
@@ -620,7 +620,7 @@ class CenaCombate(CenaBase):
                 txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
                 self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
     
-        # --- MÃO DO JOGADOR ---
+        # mão do player
         for rect_carta, carta, i in self.hitboxes_mao:
             if i != self.index_foco:
                 if carta.imagem is not None:
@@ -650,7 +650,7 @@ class CenaCombate(CenaBase):
             txt_vida_foco = self.fonte_vida.render(f"{carta_foco.vida}", True, (54, 32, 10))
             self.tela.blit(txt_vida_foco, (rect_foco.x + 112, rect_foco.y + 144))
             
-        # --- TRAJETORIA DE ENTRADA ---
+        # trajetoria de entrada
         for anim in self.animacoes:
             x_anim, y_anim = anim["pos_atual"]
             rect_render_anim = pygame.Rect(x_anim, y_anim, 144, 176)
@@ -677,7 +677,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("Inscryption Engine - Sistema de Antecipação de Turnos")
     relogio = pygame.time.Clock()
 
-    # --- FORÇAR A LEITURA DO FASES.PY ---
+    # leitura do fases
     try:
         from fases import fases_do_jogo
         mock_dados_fase = fases_do_jogo["boss_1"]
@@ -693,7 +693,7 @@ if __name__ == "__main__":
             }
         }
 
-    # --- CARREGAR CARTAS DO SEU BARALHO ---
+    # cartas do baralho
     tamanho_carta = (144, 176)
     try:
         img_capelobo = pygame.transform.scale(pygame.image.load("assets/Capelobo.png").convert_alpha(), tamanho_carta)
