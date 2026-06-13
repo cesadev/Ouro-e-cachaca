@@ -1,19 +1,3 @@
-import pygame
-try:            
-    img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
-    img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
-    img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
-    img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
-    img_leao = pygame.image.load("assets/leao.png").convert_alpha()
-    img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
-except FileNotFoundError:
-    img_capelobo = None
-    img_la_ursa = None
-    img_anhanga = None
-    img_leao = None
-    img_cobra_coral = None
-    img_timbu = None
-
 fases_do_jogo = {
     "boss_1": {
         "nome": "o lenhador brabo",

@@ -711,18 +711,29 @@ if __name__ == "__main__":
     except ModuleNotFoundError:
         try:
             img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
-            img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
-            img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
-            img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
-            img_leao = pygame.image.load("assets/leao.png").convert_alpha()
-            img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
         except FileNotFoundError:
             img_capelobo = None
+        try:
+            img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
+        except FileNotFoundError:
             img_la_ursa = None
+        try:
+            img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
+        except FileNotFoundError:
             img_anhanga = None
-            img_leao = None
+        try:
+            img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
+        except FileNotFoundError:
             img_cobra_coral = None
+        try:
+            img_leao = pygame.image.load("assets/leao.png").convert_alpha()
+        except FileNotFoundError:
+            img_leao = None
+        try:
+            img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
+        except FileNotFoundError:
             img_timbu = None
+
         print("fases.py não encontrado. Rodando em modo de segurança com dados locais.")
         mock_dados_fase = {
             "nome": "o lenhador brabo (Failsafe)",
@@ -733,25 +744,35 @@ if __name__ == "__main__":
                 4: [{"acao": "ataque_especial", "nome": "Puxão master das trevas", "dano_direto": 1}]
             }
         }
-    try:
 
+    try:
         img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
-        img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
-        img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
-        img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
-        img_leao = pygame.image.load("assets/leao.png").convert_alpha()
-        img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
     except FileNotFoundError:
         img_capelobo = None
+    try:
+        img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
+    except FileNotFoundError:
         img_la_ursa = None
+    try:
+        img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
+    except FileNotFoundError:
         img_anhanga = None
-        img_leao = None
+    try:
+        img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
+    except FileNotFoundError:
         img_cobra_coral = None
+    try:
+       img_leao = pygame.image.load("assets/leao.png").convert_alpha()
+    except FileNotFoundError:
+        img_leao = None
+    try:
+        img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
+    except FileNotFoundError:
         img_timbu = None
 
     mock_deck_jogador = [
         Carta(nome="Capelobo", poder = 1, vida=3, imagem= img_capelobo, custo_sangue=1, valor_sacrificio=1),
-        Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
+        Carta(nome="La Ursa", poder = 4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
     ]
     
 
