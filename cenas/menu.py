@@ -10,10 +10,10 @@ class Menu(CenaBase):
     super().__init__(tela)
     #botões do menu principal
     self.botoes = [
-      {"texto": "INICIAR JOGO", "pos": (640, 280)},
-      {"texto": "CONFIGURAÇÕES", "pos": (640, 380)},
-      {"texto": "EXTRA", "pos": (640, 480)},
-      {"texto": "SAIR", "pos": (640, 580)},
+      {"texto": "INICIAR JOGO", "pos": (200, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaoiniciar.png"), (150, 150))},
+      {"texto": "CONFIGURAÇÕES", "pos": (480, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaoconfig.png"), (150, 150))},
+      {"texto": "EXTRA", "pos": (760, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaoextras.png"), (150, 150))},
+      {"texto": "SAIR", "pos": (1040, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaosair.png"), (150, 150))},
     ]
 
   def processar_eventos(self, eventos):
@@ -35,22 +35,26 @@ class Menu(CenaBase):
     pass
 
   def desenhar(self):
-    self.tela.fill("#1a1a2e")#cor de fundo azul
+    self.tela.fill("#1a1a2e") #cor de fundo azul
     posicaomouse = pygame.mouse.get_pos()
 
     #exibe o título
-    titulo = fonte(80).render("CARTAS E CACHAÇA", True, "#f0c040")
+    titulo = fonte(80).render("OURO E CACHAÇA", True, "#f0c040")
     retangulotitulo = titulo.get_rect(center=(640, 120))
     self.tela.blit(titulo, retangulotitulo)
 
+    #desenha os ícones dos botões
     for botao in self.botoes:
-      fonteatual = fonte(55)
-      #muda a cor ao passar o mouse por cima
-      hover = botao["rect"].collidepoint(posicaomouse) if "rect" in botao else False
-      cor = "#f0c040" if hover else "White"
-      textobotao = fonteatual.render(botao["texto"], True, cor)
-      botao["rect"] = textobotao.get_rect(center=botao["pos"])
-      self.tela.blit(textobotao, botao["rect"])
+      iconeretangulo = botao["icone"].get_rect(center=botao["pos"])
+      hover = iconeretangulo.collidepoint(posicaomouse)
+      #aumenta o ícone se o mouse estiver em cima
+      if hover:
+        icone = pygame.transform.scale(botao["icone"], (180, 180))
+      else:
+        icone = botao["icone"]
+      iconeretangulo = icone.get_rect(center=botao["pos"])
+      self.tela.blit(icone, iconeretangulo)
+      botao["rect"] = iconeretangulo
 
 if __name__ == "__main__":
   pygame.init()
