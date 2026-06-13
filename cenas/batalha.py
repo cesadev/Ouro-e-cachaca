@@ -17,7 +17,7 @@ class Carta:
         if self.imagem is not None:
             self.rect = self.imagem.get_rect()
         else:
-            self.rect = pygame.Rect(0, 0, 140, 190)
+            self.rect = pygame.Rect(0, 0, 144, 176)
 
     def desenhar(self, tela, posicao_x, posicao_y):
         self.rect.topleft = (posicao_x, posicao_y)
@@ -27,18 +27,15 @@ class Carta:
             pygame.draw.rect(tela, (255, 255, 255), self.rect) 
             pygame.draw.rect(tela, (0, 0, 0), self.rect, 3)
         
-        
     def copy(self):
-        """Retorna uma cópia real da instância da carta (essencial para invocações)"""
+        """Retorna uma cópia real da instância da carta"""
         return Carta(self.nome, self.poder, self.vida, self.imagem, self.custo_sangue, self.valor_sacrificio)
 
 
-# cena de combate
 class CenaCombate(CenaBase):
     def __init__(self, tela, deck_jogador, dados_da_fase):
         super().__init__(tela) 
         
-        # Transforma o deck inicial em objetos da classe Carta caso venham como dicionários
         self.deck_jogador = [
             Carta(c["nome"], c.get("dano", c.get("poder", 0)), c["vida"], c.get("imagem"), c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
             if isinstance(c, dict) else c
@@ -46,67 +43,57 @@ class CenaCombate(CenaBase):
         ]
         self.mao_jogador = [] 
         
-        # dados fase
         self.id_combate = dados_da_fase.get("nome", "Combate Desconhecido")
         self.script_inimigo = dados_da_fase.get("script_inimigo", {})
         
-        # gerenciador de turnos
         self.turno_atual = "jogador"
         self.turno_global = 1 
         self.ja_comprou_neste_turno = False 
-        
         self.estado_atual = "fase_compra" 
         
         self.carta_selecionada = None
         self.index_carta_selecionada = None
         self.sangue_necessario = 0
         
-        # sist sacrificio
         self.slots_sacrificados_pendentes = [] 
         
-        # --- SISTEMA DE SEQUENCIAMENTO E COOLDOWN DE ATAQUES ---
         self.fase_resolucao = None       
         self.idx_atacante_atual = 0     
         self.progresso_ataque = 0.0     
         self.dano_aplicado = False      
         self.tempo_espera_fase = 0.0 
-        
-        # --- VELOCIDADE DO ATAQUE ---
         self.velocidade_ataque = 0.002  
         
         self.flash_aliado = [0, 0, 0, 0]
         self.flash_inimigo = [0, 0, 0, 0]
-        
         self.animacoes = []
         
-        # --- TABULEIRO (4 SLOTS) ---
         self.slots_aliados = [None, None, None, None]
         self.slots_inimigos = [None, None, None, None]
-        
-        # --- FILA DE MEMÓRIA/ANTECIPAÇÃO DO INIMIGO ---
         self.filas_espera_inimigas = [[], [], [], []]
         
-        # Puxa os obstáculos iniciais convertendo-os em objetos Carta
+        # --- CARREGAMENTO AUTOMÁTICO DE OBSTÁCULOS ---
         for obstaculo in dados_da_fase.get("obstaculos_iniciais", []):
-            carta_obs = Carta(
-                obstaculo["nome"], 
-                obstaculo.get("dano", 0), 
-                obstaculo["vida"], 
-                obstaculo.get("imagem"), 
-                obstaculo.get("custo_sangue", 0), 
-                obstaculo.get("valor_sacrificio", 0)
-            )
+            nome_obs = obstaculo["nome"]
+            imagem_obs = obstaculo.get("imagem")
+            
+            if imagem_obs is None:
+                try:
+                    img_original = pygame.image.load(f"assets/{nome_obs}.png").convert_alpha()
+                    imagem_obs = pygame.transform.scale(img_original, (144, 176))
+                except FileNotFoundError:
+                    imagem_obs = None
+                    
+            carta_obs = Carta(nome_obs, obstaculo.get("dano", 0), obstaculo["vida"], imagem_obs, obstaculo.get("custo_sangue", 0), obstaculo.get("valor_sacrificio", 0))
             self.slots_inimigos[obstaculo["slot"]] = carta_obs
             
         self._carregar_intencoes_inimigas_do_turno(1)
         
-        # --- RECURSOS AND BALANÇA ---
         self.pernas_disponiveis = 10 
         self.vida_player = 2 
         self.peso_balanca = 0 
         self.resultado = None
         
-        # decks
         def gerar_bagunca_cumulativa(quantidade):
             desvios = []
             x_atual, y_atual = 0.0, 0.0
@@ -123,7 +110,6 @@ class CenaCombate(CenaBase):
         self.bagunca_deck = gerar_bagunca_cumulativa(40)
         
         largura_tela, altura_tela = tela.get_size()
-        
         try:
             imagem_original = pygame.image.load("assets/combate.png").convert()
             self.imagem_fundo = pygame.transform.scale(imagem_original, (largura_tela, altura_tela))
@@ -133,14 +119,13 @@ class CenaCombate(CenaBase):
 
         try:
             img_perna_original = pygame.image.load("assets/Perna.png").convert_alpha()
-            self.img_perna = pygame.transform.scale(img_perna_original, (140, 190))
+            self.img_perna = pygame.transform.scale(img_perna_original, (144, 176))
         except FileNotFoundError:
             self.img_perna = None
 
-        # --- HITBOXES FIXAS ---
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
-        self.comprar_pernas_rect = pygame.Rect(1190, 465, 140, 190)
-        self.comprar_deck_rect = pygame.Rect(1350, 465, 140, 190)
+        self.comprar_pernas_rect = pygame.Rect(1190, 465, 144, 176)
+        self.comprar_deck_rect = pygame.Rect(1350, 465, 144, 176)
         
         self.descricao_left_rect = pygame.Rect(1150, 130, 40, 40) 
         self.descricao_right_rect = pygame.Rect(1450, 130, 40, 40)
@@ -151,12 +136,12 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_espera = [] 
         self.hitboxes_vida = [] 
         self.hitboxes_itens = []
-        
         self.itens_jogador = [{"nome": "Abridor de Lata"}, {"nome": "Peixeira"}]
 
         self.mensagem_debug = "Início do Turno: Compre uma carta!"
         self.debug = pygame.font.SysFont("Arial", 36)
         self.fonte_cartas = pygame.font.SysFont("Arial", 20) 
+        self.fonte_vida = pygame.font.SysFont("Arial", 30, bold=True)
         self.fonte_mini = pygame.font.SysFont("Arial", 14) 
         self.index_foco = None 
         
@@ -168,7 +153,18 @@ class CenaCombate(CenaBase):
                 slot = comando["slot"]
                 c = comando["carta"]
                 if isinstance(c, dict):
-                    carta_obj = Carta(c["nome"], c.get("dano", c.get("poder", 0)), c["vida"], c.get("imagem"), c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
+                    nome_inimigo = c["nome"]
+                    imagem_inimigo = c.get("imagem")
+                    
+                    # --- MAGIA DE CARREGAMENTO AUTOMÁTICO PARA INIMIGOS ---
+                    if imagem_inimigo is None:
+                        try:
+                            img_original = pygame.image.load(f"assets/{nome_inimigo}.png").convert_alpha()
+                            imagem_inimigo = pygame.transform.scale(img_original, (144, 176))
+                        except FileNotFoundError:
+                            imagem_inimigo = None
+                            
+                    carta_obj = Carta(nome_inimigo, c.get("dano", c.get("poder", 0)), c["vida"], imagem_inimigo, c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
                 else:
                     carta_obj = c.copy()
                 self.filas_espera_inimigas[slot].append(carta_obj)
@@ -193,8 +189,7 @@ class CenaCombate(CenaBase):
                         
                         if self.comprar_pernas_rect.collidepoint(pos_mouse):
                             if not self.ja_comprou_neste_turno and self.pernas_disponiveis > 0:
-                                # a parte do sacrificio da perna
-                                self.mao_jogador.append(Carta("Perna", 0, 1, self.img_perna, 0, 1))
+                                self.mao_jogador.append(Carta("Perna Cabeluda", 0, 1, self.img_perna, 0, 1))
                                 self.pernas_disponiveis -= 1
                                 self.ja_comprou_neste_turno = True
                                 comprou_agora = True
@@ -253,7 +248,6 @@ class CenaCombate(CenaBase):
                                         if rect_slot.collidepoint(pos_mouse):
                                             if self.slots_aliados[i] is not None and i not in self.slots_sacrificados_pendentes:
                                                 self.slots_sacrificados_pendentes.append(i)
-                                                
                                                 sangue_acumulado = sum(self.slots_aliados[idx].valor_sacrificio for idx in self.slots_sacrificados_pendentes)
                                                 
                                                 if sangue_acumulado >= self.sangue_necessario:
@@ -313,8 +307,6 @@ class CenaCombate(CenaBase):
                 anim["pos_atual"][1] = y0 + (y1 - y0) * fator_suave
 
         if self.turno_atual == "resolvendo_combate":
-            
-            # FASE 1: SEUS CARDS ATACAM
             if self.fase_resolucao == "aliados":
                 while self.idx_atacante_atual < 4:
                     card = self.slots_aliados[self.idx_atacante_atual]
@@ -357,7 +349,6 @@ class CenaCombate(CenaBase):
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
 
-            # FASE 2: COOLDOWN E EVENTOS ESPECIAIS DO CHEFE
             elif self.fase_resolucao == "pre_inimigo":
                 self.tempo_espera_fase -= dt
                 if self.tempo_espera_fase <= 0:
@@ -373,7 +364,6 @@ class CenaCombate(CenaBase):
                     self.dano_aplicado = False
                     self.mensagem_debug = "Inimigos avançam para atacar!"
 
-            # FASE 3: ATAQUE DOS CARDS INIMIGOS
             elif self.fase_resolucao == "inimigos":
                 while self.idx_atacante_atual < 4:
                     card = self.slots_inimigos[self.idx_atacante_atual]
@@ -414,7 +404,6 @@ class CenaCombate(CenaBase):
                             self.slots_aliados[self.idx_atacante_atual] = None
                     else:
                         self.peso_balanca -= card_atacante.dano
-                        
                     self.dano_aplicado = True
 
                 if self.progresso_ataque >= 1.0:
@@ -422,7 +411,6 @@ class CenaCombate(CenaBase):
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
 
-        # Construção dos retangulos
         self.hitboxes_vida.clear()
         pos_x_vida, pos_y_vida, tamanho_vida, espacamento_vida = 145, 505, 80, 20
         for i in range(self.vida_player):
@@ -433,14 +421,16 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_inimigos.clear()
         self.hitboxes_slots_espera.clear()
         
-        pos_x_slot = 458
-        y_espera = 62
-        y_inimigos = 158
-        y_aliados = 408
+        # --- ALINHAMENTO DAS CARTAS ---
+        pos_x_slot = 466        
+        y_espera = 66
+        y_inimigos = 166
+        y_aliados = 398
         
-        espacamento_horizontal = 160
+        espacamento_horizontal = 164
         largura_padrao, altura_padrao = 144, 176 
         altura_mini = 81
+        
         for i in range(4):
             self.hitboxes_slots_espera.append((pygame.Rect(pos_x_slot, y_espera, largura_padrao, altura_mini), i))
             self.hitboxes_slots_inimigos.append((pygame.Rect(pos_x_slot, y_inimigos, largura_padrao, altura_padrao), i))
@@ -453,7 +443,6 @@ class CenaCombate(CenaBase):
             self.hitboxes_itens.append((pygame.Rect(pos_x_inicial_item, 330, 120, 120), item))
             pos_x_inicial_item += 140
 
-        # --- GERENCIADOR DA MÃO ---
         self.hitboxes_mao.clear() 
         qtd_cartas = len(self.mao_jogador)
         if qtd_cartas > 0:
@@ -485,7 +474,6 @@ class CenaCombate(CenaBase):
     def desenhar(self):
         self.tela.blit(self.imagem_fundo, (0, 0))
 
-        # --- BALANÇA ---
         centro_x, centro_y, raio = 240, 350, 128
         angulo_rad = math.radians(self.peso_balanca * 2.5)
         dx, dy = math.cos(angulo_rad) * raio, math.sin(angulo_rad) * raio
@@ -506,10 +494,8 @@ class CenaCombate(CenaBase):
         txt_balanca = self.debug.render(f"{self.peso_balanca}", True, (255, 255, 255))
         self.tela.blit(txt_balanca, (centro_x - txt_balanca.get_width()//2, centro_y - 30))
 
-        # --- CAMPAINHA ---
         pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
         
-        # --- DECKS ---
         piscar = self.estado_atual == "fase_compra" and (pygame.time.get_ticks() % 1000 < 500)
         cor_pernas_base = (200, 50, 50) if piscar else (255, 105, 97)
         cor_deck_base = (120, 150, 160) if piscar else (174, 198, 207)
@@ -517,10 +503,9 @@ class CenaCombate(CenaBase):
         def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado):
             for i in range(qtd_itens):
                 off_x, off_y, angulo = lista_bagunca[i % len(lista_bagunca)]
-                surf_carta = pygame.Surface((140, 190), pygame.SRCALPHA)
+                surf_carta = pygame.Surface((144, 176), pygame.SRCALPHA)
                 cor = (100, 100, 100) if bloqueado else cor_base
                 surf_carta.fill(cor)
-                pygame.draw.rect(surf_carta, (0, 0, 0), (0, 0, 140, 190), 6)
                 
                 carta_rot = pygame.transform.rotate(surf_carta, angulo)
                 rect_final = carta_rot.get_rect(center=pos_rect.center)
@@ -538,7 +523,6 @@ class CenaCombate(CenaBase):
         else:
             pygame.draw.rect(self.tela, (50, 50, 50), self.comprar_deck_rect) 
 
-        # --- PERIFÉRICOS ---
         pygame.draw.rect(self.tela, (75, 0, 130), self.descricao_left_rect)   
         pygame.draw.rect(self.tela, (200, 162, 200), self.descricao_right_rect) 
         for rect_vida in self.hitboxes_vida:
@@ -548,7 +532,7 @@ class CenaCombate(CenaBase):
             pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
             pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2) 
             
-        # --- EXIBIÇÃO DO CAMPO DE CIMA (MINI CARTAS DE MEMÓRIA) ---
+        # --- MINI CARTAS DE MEMÓRIA (COM IMAGEM) ---
         for rect_mini, i in self.hitboxes_slots_espera:
             pygame.draw.rect(self.tela, (60, 45, 45), rect_mini, 1)
             
@@ -556,16 +540,21 @@ class CenaCombate(CenaBase):
             if len(fila) > 0:
                 proxima_carta = fila[0] 
                 
-                pygame.draw.rect(self.tela, (45, 45, 50), rect_mini.inflate(-4, -4))
-                pygame.draw.rect(self.tela, (100, 80, 80), rect_mini.inflate(-4, -4), 2)
-                
-                txt_nome = self.fonte_mini.render(proxima_carta.nome, True, (200, 200, 200))
-                self.tela.blit(txt_nome, (rect_mini.x + 8, rect_mini.y + 8))
-                
-                txt_status = self.fonte_mini.render(f"ATK:{proxima_carta.dano}  HP:{proxima_carta.vida}", True, (160, 140, 140))
-                self.tela.blit(txt_status, (rect_mini.x + 8, rect_mini.y + 45))
+                if proxima_carta.imagem is not None:
+                    topo_carta = proxima_carta.imagem.subsurface((0, 0, 144, 81))
+                    self.tela.blit(topo_carta, rect_mini)
+                    pygame.draw.rect(self.tela, (100, 80, 80), rect_mini, 2)
+                else:
+                    pygame.draw.rect(self.tela, (45, 45, 50), rect_mini.inflate(-4, -4))
+                    pygame.draw.rect(self.tela, (100, 80, 80), rect_mini.inflate(-4, -4), 2)
+                    
+                    txt_nome = self.fonte_mini.render(proxima_carta.nome, True, (200, 200, 200))
+                    self.tela.blit(txt_nome, (rect_mini.x + 8, rect_mini.y + 8))
+                    
+                    txt_status = self.fonte_mini.render(f"ATK:{proxima_carta.dano}  HP:{proxima_carta.vida}", True, (160, 140, 140))
+                    self.tela.blit(txt_status, (rect_mini.x + 8, rect_mini.y + 45))
 
-        # Coisas dos inimigos
+        # --- CARTAS INIMIGAS NO TABULEIRO ---
         for rect_slot, i in self.hitboxes_slots_inimigos:
             rect_desenho = rect_slot.copy()
             
@@ -575,22 +564,20 @@ class CenaCombate(CenaBase):
                 dist_max = 240 if alvo_vazio else 170
                 rect_desenho.y += int(dist_max * fator_onda) 
             
-            pygame.draw.rect(self.tela, (150, 50, 50), rect_desenho, 2) 
             if self.slots_inimigos[i]:
-                cor_corpo = (255, 30, 30) if self.flash_inimigo[i] > 0 else (200, 100, 100)
-                
-                pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-10, -10))
-                txt = self.fonte_cartas.render(self.slots_inimigos[i].nome, True, (255,255,255))
-                self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
-                txt_atk = self.fonte_cartas.render(f"ATK: {self.slots_inimigos[i].dano}", True, (255, 255, 255))
-                self.tela.blit(txt_atk, (rect_desenho.x + 10, rect_desenho.y + 100))
+                if self.slots_inimigos[i].imagem is not None:
+                    self.tela.blit(self.slots_inimigos[i].imagem, (rect_desenho.x, rect_desenho.y))
+                else:
+                    cor_corpo = (255, 30, 30) if self.flash_inimigo[i] > 0 else (200, 100, 100)
+                    pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-10, -10))
+                    txt = self.fonte_cartas.render(self.slots_inimigos[i].nome, True, (255,255,255))
+                    self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
 
-                txt_vida = self.fonte_cartas.render(f"{self.slots_inimigos[i].vida}", True, (54, 32, 10))
+                txt_vida = self.fonte_vida.render(f"{self.slots_inimigos[i].vida}", True, (54, 32, 10))
                 self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
                 
-        # slots cartas player
+        # --- CARTAS ALIADAS NO TABULEIRO ---
         for rect_slot, i in self.hitboxes_slots_aliados:
-            cor_borda = (50, 150, 50) 
             rect_desenho = rect_slot.copy()
             esta_em_panico = False
             prometida_ao_abate = i in self.slots_sacrificados_pendentes
@@ -603,40 +590,37 @@ class CenaCombate(CenaBase):
 
             if prometida_ao_abate:
                 cor_borda = (0, 0, 0) 
+                pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
                 
             elif self.estado_atual == "sacrificio" and self.slots_aliados[i] is not None:
                 esta_em_panico = True
                 tempo_ticks = pygame.time.get_ticks()
                 rect_desenho.x += int(math.sin(tempo_ticks * 0.03 + i * 12) * 3)
                 rect_desenho.y += int(math.cos(tempo_ticks * 0.03 + i * 7) * 3)
-                
                 pulso_alfa = int(140 + 115 * math.sin(tempo_ticks * 0.015))
                 cor_borda = (pulso_alfa, 0, 0) 
+                pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
                 
             elif self.estado_atual == "posicionamento" and (self.slots_aliados[i] is None or prometida_ao_abate):
                 cor_borda = (0, 255, 0) 
-
-            if prometida_ao_abate or esta_em_panico:
                 pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
-            
+
             if self.slots_aliados[i] and not prometida_ao_abate:
                 cor_texto = (0,0,0) if not esta_em_panico else (255,255,255)
 
                 if self.slots_aliados[i].imagem is not None:
-                    self.tela.blit(self.slots_aliados[i].imagem, (rect_desenho.x, rect_desenho.y-4))                
+                    self.tela.blit(self.slots_aliados[i].imagem, (rect_desenho.x, rect_desenho.y))                
                 else:
                     cor_corpo = (255, 30, 30) if self.flash_aliado[i] > 0 else ((100, 200, 100) if not esta_em_panico else (160, 80, 80))
-                    
                     pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-12, -12))
                     txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
                     self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
                 
-                    
-                cor_vida = (200, 0, 0) if prometida_ao_abate or esta_em_panico else (54, 32, 10)    
-                txt_vida = self.fonte_cartas.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
-                self.tela.blit(txt_vida, (rect_desenho.x + 85, rect_desenho.y + 160))
+                cor_vida = (200, 0, 0) if esta_em_panico else (54, 32, 10)    
+                txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
+                self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
     
-        # MÃO DO JOGADOR
+        # --- MÃO DO JOGADOR ---
         for rect_carta, carta, i in self.hitboxes_mao:
             if i != self.index_foco:
                 if carta.imagem is not None:
@@ -644,58 +628,46 @@ class CenaCombate(CenaBase):
                 else:
                     cor_fundo = (255, 255, 200) if (self.estado_atual != "normal" and self.estado_atual != "fase_compra" and i == self.index_carta_selecionada) else (255, 255, 255)
                     pygame.draw.rect(self.tela, cor_fundo, rect_carta) 
-                    
                     txt_nome = self.fonte_cartas.render(carta.nome, True, (0,0,0))
                     txt_custo = self.fonte_cartas.render(f"Custo: {carta.custo_sangue}", True, (200,0,0))
                     self.tela.blit(txt_nome, (rect_carta.x + 5, rect_carta.y + 10))
                     self.tela.blit(txt_custo, (rect_carta.x + 5, rect_carta.y + 40))
-                
 
-                # isso aqui vai ser somente pra fazer o texto aparecer quando estiver na mão
-                txt_vida_mao = self.fonte_cartas.render(f"{carta.vida}", True, (54, 32, 10))
+                txt_vida_mao = self.fonte_vida.render(f"{carta.vida}", True, (54, 32, 10))
                 self.tela.blit(txt_vida_mao, (rect_carta.x + 112, rect_carta.y + 144))
                 
         if self.index_foco is not None and self.index_foco < len(self.hitboxes_mao):
             rect_foco, carta_foco, _ = self.hitboxes_mao[self.index_foco]
-            
             if carta_foco.imagem is not None:
                 self.tela.blit(carta_foco.imagem, rect_foco)
             else:
                 pygame.draw.rect(self.tela, (255, 255, 220), rect_foco) 
-                
                 txt_nome = self.fonte_cartas.render(carta_foco.nome, True, (0,0,0))
                 txt_custo = self.fonte_cartas.render(f"Custo: {carta_foco.custo_sangue}", True, (200,0,0))
                 self.tela.blit(txt_nome, (rect_foco.x + 5, rect_foco.y + 10))
                 self.tela.blit(txt_custo, (rect_foco.x + 5, rect_foco.y + 40))
             
-            # esse daqui é quando o mouse tá em cima  
-            txt_vida_foco = self.fonte_cartas.render(f"{carta_foco.vida}", True, (54, 32, 10))
+            txt_vida_foco = self.fonte_vida.render(f"{carta_foco.vida}", True, (54, 32, 10))
             self.tela.blit(txt_vida_foco, (rect_foco.x + 112, rect_foco.y + 144))
             
-        #Trajetoria de entrada
+        # --- TRAJETORIA DE ENTRADA ---
         for anim in self.animacoes:
             x_anim, y_anim = anim["pos_atual"]
-            rect_render_anim = pygame.Rect(x_anim, y_anim, 140, 190)
+            rect_render_anim = pygame.Rect(x_anim, y_anim, 144, 176)
             carta_anim = anim["carta"]
-            
             if carta_anim.imagem is not None:
                 self.tela.blit(carta_anim.imagem, rect_render_anim)
             else:
-                # Se não tiver imagem, faz o quadrado branco padrão
                 pygame.draw.rect(self.tela, (240, 240, 240), rect_render_anim)
                 pygame.draw.rect(self.tela, (0, 0, 0), rect_render_anim, 6)
                 txt_nome = self.fonte_cartas.render(carta_anim.nome, True, (0,0,0))
                 self.tela.blit(txt_nome, (rect_render_anim.x + 5, rect_render_anim.y + 10))
 
-        # --- BANNER DE AVISOS ---
         texto_surface = self.debug.render(self.mensagem_debug, True, (255, 255, 255))
         rect_texto = texto_surface.get_rect(center=(self.tela.get_width() // 2, 825))
         pygame.draw.rect(self.tela, (0, 0, 0), rect_texto.inflate(20, 10)) 
         self.tela.blit(texto_surface, rect_texto)
 
-
-
-# SEÇÃO PRINCIPAL DE TESTE
 
 if __name__ == "__main__":
     pygame.init()
@@ -705,84 +677,45 @@ if __name__ == "__main__":
     pygame.display.set_caption("Inscryption Engine - Sistema de Antecipação de Turnos")
     relogio = pygame.time.Clock()
 
+    # --- FORÇAR A LEITURA DO FASES.PY ---
     try:
         from fases import fases_do_jogo
         mock_dados_fase = fases_do_jogo["boss_1"]
     except ModuleNotFoundError:
-        try:
-            img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
-        except FileNotFoundError:
-            img_capelobo = None
-        try:
-            img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
-        except FileNotFoundError:
-            img_la_ursa = None
-        try:
-            img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
-        except FileNotFoundError:
-            img_anhanga = None
-        try:
-            img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
-        except FileNotFoundError:
-            img_cobra_coral = None
-        try:
-            img_leao = pygame.image.load("assets/leao.png").convert_alpha()
-        except FileNotFoundError:
-            img_leao = None
-        try:
-            img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
-        except FileNotFoundError:
-            img_timbu = None
-
         print("fases.py não encontrado. Rodando em modo de segurança com dados locais.")
         mock_dados_fase = {
             "nome": "o lenhador brabo (Failsafe)",
             "obstaculos_iniciais": [{"slot": 2, "nome": "Tronco", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
             "script_inimigo": {
-                1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1, "imagem": img_capelobo}, "slot": 0}],
-                2: [{"acao": "jogar_carta", "carta": {"nome": "Timbu", "vida": 2, "dano": 2, "imagem": img_timbu}, "slot": 3}],
+                1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1}, "slot": 0}],
+                2: [{"acao": "jogar_carta", "carta": {"nome": "timbu", "vida": 1, "dano": 1}, "slot": 3}],
                 4: [{"acao": "ataque_especial", "nome": "Puxão master das trevas", "dano_direto": 1}]
             }
         }
 
+    # --- CARREGAR CARTAS DO SEU BARALHO ---
+    tamanho_carta = (144, 176)
     try:
-        img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
+        img_capelobo = pygame.transform.scale(pygame.image.load("assets/Capelobo.png").convert_alpha(), tamanho_carta)
     except FileNotFoundError:
         img_capelobo = None
+        
     try:
-        img_la_ursa = pygame.image.load("assets/LaUrsa.png").convert_alpha()
+        img_la_ursa = pygame.transform.scale(pygame.image.load("assets/LaUrsa.png").convert_alpha(), tamanho_carta)
     except FileNotFoundError:
         img_la_ursa = None
-    try:
-        img_anhanga = pygame.image.load("assets/Anhanga.png").convert_alpha()
-    except FileNotFoundError:
-        img_anhanga = None
-    try:
-        img_cobra_coral = pygame.image.load("assets/cobra_coral.png").convert_alpha()
-    except FileNotFoundError:
-        img_cobra_coral = None
-    try:
-       img_leao = pygame.image.load("assets/leao.png").convert_alpha()
-    except FileNotFoundError:
-        img_leao = None
-    try:
-        img_timbu = pygame.image.load("assets/timbu.png").convert_alpha()
-    except FileNotFoundError:
-        img_timbu = None
 
     mock_deck_jogador = [
-        Carta(nome="Capelobo", poder = 1, vida=3, imagem= img_capelobo, custo_sangue=1, valor_sacrificio=1),
-        Carta(nome="La Ursa", poder = 4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
+        Carta(nome="Capelobo", poder=1, vida=3, imagem=img_capelobo, custo_sangue=1, valor_sacrificio=1),
+        Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
     ]
     
-
     cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
     
     rodando = True
     while rodando:
         dt = relogio.tick(60) 
         eventos = pygame.event.get() 
-        
         for evento in eventos:
             if evento.type == pygame.QUIT:
                 rodando = False
