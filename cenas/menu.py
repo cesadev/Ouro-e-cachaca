@@ -1,5 +1,5 @@
 import pygame, sys
-from cena_base import CenaBase
+from cenas.cena_base import CenaBase
 
 #define a fonte
 def fonte(tamanho):
@@ -8,13 +8,19 @@ def fonte(tamanho):
 class Menu(CenaBase):
   def __init__(self, tela):
     super().__init__(tela)
+    self.terminou = False
+    self.proxima_cena = None
+
+    meio_x = tela.get_width() // 2
+    y_botoes = tela.get_height() * 0.75
     #botões do menu principal
+
     self.botoes = [
-      {"texto": "INICIAR JOGO", "pos": (200, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaoiniciar.png"), (150, 150))},
-      {"texto": "CONFIGURAÇÕES", "pos": (480, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaoconfig.png"), (150, 150))},
-      {"texto": "EXTRA", "pos": (760, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaoextras.png"), (150, 150))},
-      {"texto": "SAIR", "pos": (1040, 525), "icone": pygame.transform.scale(pygame.image.load("assets/botaosair.png"), (150, 150))},
-    ]
+            {"texto": "INICIAR JOGO", "pos": (meio_x - 420, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaoiniciar.png"), (150, 150))},
+            {"texto": "CONFIGURAÇÕES", "pos": (meio_x - 140, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaoconfig.png"), (150, 150))},
+            {"texto": "EXTRA", "pos": (meio_x + 140, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaoextras.png"), (150, 150))},
+            {"texto": "SAIR", "pos": (meio_x + 420, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaosair.png"), (150, 150))},
+        ]
 
   def processar_eventos(self, eventos):
     posicaomouse = pygame.mouse.get_pos()
@@ -30,6 +36,12 @@ class Menu(CenaBase):
             if botao["texto"] == "SAIR":
               pygame.quit()
               sys.exit()
+          if botao["rect"].collidepoint(posicaomouse):
+              if botao["texto"] == "INICIAR JOGO":
+                self.terminou = True
+                self.proxima_cena = "introducao"
+                
+              
 
   def atualizar(self, dt):
     pass
@@ -39,8 +51,10 @@ class Menu(CenaBase):
     posicaomouse = pygame.mouse.get_pos()
 
     #exibe o título
+    meio_x = self.tela.get_width() // 2
+    y_titulo = self.tela.get_height() * 0.15
     titulo = fonte(80).render("OURO E CACHAÇA", True, "#f0c040")
-    retangulotitulo = titulo.get_rect(center=(640, 120))
+    retangulotitulo = titulo.get_rect(center=(meio_x, y_titulo))
     self.tela.blit(titulo, retangulotitulo)
 
     #desenha os ícones dos botões
@@ -58,7 +72,7 @@ class Menu(CenaBase):
 
 if __name__ == "__main__":
   pygame.init()
-  tela = pygame.display.set_mode((1280, 720))
+  tela = pygame.display.set_mode((1536, 864))
   pygame.display.set_caption("Cartas e Cachaça")
   relogio = pygame.time.Clock()
 

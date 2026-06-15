@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from cena_base import CenaBase
+from cenas.cena_base import CenaBase
 
 class Carta:
     def __init__(self, nome, poder, vida, imagem=None, custo_sangue=0, valor_sacrificio=1):
@@ -422,14 +422,14 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_espera.clear()
         
         # alinhamento das cartas
-        pos_x_slot = 466        
-        y_espera = 66
-        y_inimigos = 166
-        y_aliados = 398
+        pos_x_slot = 458
+        y_espera = 32
+        y_inimigos = 158
+        y_aliados = 408
         
-        espacamento_horizontal = 164
+        espacamento_horizontal = 160
         largura_padrao, altura_padrao = 144, 176 
-        altura_mini = 81
+        altura_mini = 101
         
         for i in range(4):
             self.hitboxes_slots_espera.append((pygame.Rect(pos_x_slot, y_espera, largura_padrao, altura_mini), i))
@@ -541,7 +541,7 @@ class CenaCombate(CenaBase):
                 proxima_carta = fila[0] 
                 
                 if proxima_carta.imagem is not None:
-                    topo_carta = proxima_carta.imagem.subsurface((0, 0, 144, 81))
+                    topo_carta = proxima_carta.imagem.subsurface((0, 75, 144, 101))
                     self.tela.blit(topo_carta, rect_mini)
                     pygame.draw.rect(self.tela, (100, 80, 80), rect_mini, 2)
                 else:
@@ -685,7 +685,7 @@ if __name__ == "__main__":
         print("fases.py não encontrado. Rodando em modo de segurança com dados locais.")
         mock_dados_fase = {
             "nome": "o lenhador brabo (Failsafe)",
-            "obstaculos_iniciais": [{"slot": 2, "nome": "Tronco", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
+            "obstaculos_iniciais": [{"slot": 2, "nome": "Cacto", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
             "script_inimigo": {
                 1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1}, "slot": 0}],
                 2: [{"acao": "jogar_carta", "carta": {"nome": "timbu", "vida": 1, "dano": 1}, "slot": 3}],
@@ -705,9 +705,15 @@ if __name__ == "__main__":
     except FileNotFoundError:
         img_la_ursa = None
 
+    try:
+        img_comadre = pygame.transform.scale(pygame.image.load("assets/comadre.png").convert_alpha(), tamanho_carta)
+    except:
+        img_comadre = None
+
     mock_deck_jogador = [
         Carta(nome="Capelobo", poder=1, vida=3, imagem=img_capelobo, custo_sangue=1, valor_sacrificio=1),
         Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
+        Carta(nome="Comadre", poder=1, vida=1, imagem= img_comadre, custo_sangue=2, valor_sacrificio=1)
     ]
     
     cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
