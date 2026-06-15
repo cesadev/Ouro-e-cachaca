@@ -685,7 +685,7 @@ if __name__ == "__main__":
         print("fases.py não encontrado. Rodando em modo de segurança com dados locais.")
         mock_dados_fase = {
             "nome": "o lenhador brabo (Failsafe)",
-            "obstaculos_iniciais": [{"slot": 2, "nome": "Tronco", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
+            "obstaculos_iniciais": [{"slot": 2, "nome": "Cacto", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
             "script_inimigo": {
                 1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1}, "slot": 0}],
                 2: [{"acao": "jogar_carta", "carta": {"nome": "timbu", "vida": 1, "dano": 1}, "slot": 3}],
@@ -705,9 +705,15 @@ if __name__ == "__main__":
     except FileNotFoundError:
         img_la_ursa = None
 
+    try:
+        img_comadre = pygame.transform.scale(pygame.image.load("assets/comadre.png").convert_alpha(), tamanho_carta)
+    except:
+        img_comadre = None
+
     mock_deck_jogador = [
         Carta(nome="Capelobo", poder=1, vida=3, imagem=img_capelobo, custo_sangue=1, valor_sacrificio=1),
         Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
+        Carta(nome="Comadre", poder=1, vida=1, imagem= img_comadre, custo_sangue=2, valor_sacrificio=1)
     ]
     
     cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
