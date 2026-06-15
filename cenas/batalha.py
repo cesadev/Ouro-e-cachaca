@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from cena_base import CenaBase
+from cenas.cena_base import CenaBase
 
 class Carta:
     def __init__(self, nome, poder, vida, imagem=None, custo_sangue=0, valor_sacrificio=1):

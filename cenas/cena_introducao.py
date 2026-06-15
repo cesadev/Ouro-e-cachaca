@@ -19,7 +19,7 @@ class CenaIntroducao(CenaBase):
 
                         if self.indice_atual >= len(self.dialogos):
                             self.terminou = True
-                            self.proxima_cena = "mapa"
+                            self.proxima_cena = "tutorial"
 
     #aqui entra a animação. em standby enquanto não fiz
     def atualizar(self, dt):
