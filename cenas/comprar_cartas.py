@@ -118,9 +118,6 @@ class CenaEscolhaCarta(CenaBase):
     def desenhar(self):
         self.tela.blit(self.fundo, (0, 0))
         
-        if self.estado in ["animacao", "escolha"]:
-            titulo = self.fonte_titulo.render("Escolha uma carta para o seu baralho", True, (255, 255, 255))
-            self.tela.blit(titulo, (self.tela.get_width()//2 - titulo.get_width()//2, 150))
         
         if self.estado in ["animacao", "escolha", "dialogo_final"]:
             for i, carta in enumerate(self.cartas_na_mesa):

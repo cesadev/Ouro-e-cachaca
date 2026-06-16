@@ -2,7 +2,7 @@ import pygame
 from cenas.cena_base import CenaBase
 
 class CenaMapa(CenaBase):
-    def __init__(self, tela, nodo_atual):
+    def __init__(self, tela, nodo_atual=0):
         super().__init__(tela)
 
         self.nodo_atual = nodo_atual
@@ -16,10 +16,10 @@ class CenaMapa(CenaBase):
 
         self.nos_clicaveis = [
         {"id": 0, "rect": pygame.Rect(65, 400, 80, 80), "destino": "combate", "proximos": [1]},
-        {"id": 1, "rect": pygame.Rect(250, 470, 80, 80), "destino": "carta", "proximos": [2]},
+        {"id": 1, "rect": pygame.Rect(250, 470, 80, 80), "destino": "comprar_cartas", "proximos": [2]},
         {"id": 2, "rect": pygame.Rect(390, 310, 80, 80), "destino": "mochila", "proximos": [3]},
         {"id": 3, "rect": pygame.Rect(535, 510, 80, 80), "destino": "combate", "proximos": [4]},
-        {"id": 4, "rect": pygame.Rect(665, 355, 80, 80), "destino": "cartas", "proximos": [5]},
+        {"id": 4, "rect": pygame.Rect(665, 355, 80, 80), "destino": "comprar_cartas", "proximos": [5]},
         {"id": 5, "rect": pygame.Rect(740, 510, 80, 80), "destino": "selos", "proximos": [6]},
         {"id": 6, "rect": pygame.Rect(895, 395, 80, 80), "destino": "combate", "proximos": [7,8]},
         {"id": 7, "rect": pygame.Rect(1040, 260, 80, 80), "destino": "selos", "proximos": [9]},
@@ -28,15 +28,18 @@ class CenaMapa(CenaBase):
                 
 
     def processar_eventos(self, eventos):
-            for evento in eventos:
-                if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                    pos_mouse = pygame.mouse.get_pos()
-                    opcoes_validas = self.nos_clicaveis[self.nodo_atual]["proximos"]
-                    for no in self.nos_clicaveis:
-                        if no["rect"].collidepoint(pos_mouse) and no["id"] in opcoes_validas:
-                            self.terminou = True
-                            self.proxima_cena = no["destino"]
-                            self.novo_nodo = no["id"]
+        for evento in eventos:
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                pos_mouse = pygame.mouse.get_pos()
+                opcoes_validas = self.nos_clicaveis[self.nodo_atual]["proximos"]
+                
+                for no in self.nos_clicaveis:
+                    if no["rect"].collidepoint(pos_mouse):
+                        if no["id"] in opcoes_validas:
+                            self.nodo_atual = no["id"]
+                            self.proxima_cena = no["destino"] 
+                            self.terminou = True 
+                            return
 
     def atualizar(self, dt):
             pass

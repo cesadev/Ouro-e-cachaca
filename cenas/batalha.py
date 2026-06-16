@@ -33,7 +33,7 @@ class Carta:
 
 
 class CenaCombate(CenaBase):
-    def __init__(self, tela, deck_jogador, dados_da_fase):
+    def __init__(self, tela, deck_jogador, dados_da_fase, vida_player):
         super().__init__(tela) 
         tamanho_copo = (80, 96) 
 
@@ -50,7 +50,21 @@ class CenaCombate(CenaBase):
             for c in deck_jogador
         ]
         self.mao_jogador = [] 
+        self.mao_jogador.append(Carta("Perna Cabeluda", 0, 1, self.img_perna, 0, 1))
+        carta_custo_1 = None
+        for i, carta in enumerate(self.deck_jogador):
+            if carta.custo_sangue == 1:
+                carta_custo_1 = self.deck_jogador.pop(i)
+                break
+        if carta_custo_1 is not None:
+            self.mao_jogador.append(carta_custo_1)
+        elif len(self.deck_jogador) > 0:
+            self.mao_jogador.append(self.deck_jogador.pop(0))
+            
+        if len(self.deck_jogador) > 0:
+            self.mao_jogador.append(self.deck_jogador.pop(0))
         
+
         self.id_combate = dados_da_fase.get("nome", "Combate Desconhecido")
         self.script_inimigo = dados_da_fase.get("script_inimigo", {})
         
@@ -64,6 +78,7 @@ class CenaCombate(CenaBase):
         self.sangue_necessario = 0
         
         self.slots_sacrificados_pendentes = [] 
+        self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
         
         self.fase_resolucao = None       
         self.idx_atacante_atual = 0     
@@ -98,7 +113,7 @@ class CenaCombate(CenaBase):
         self._carregar_intencoes_inimigas_do_turno(1)
         
         self.pernas_disponiveis = 10 
-        self.vida_player = 2 
+        self.vida_player = vida_player
         self.peso_balanca = 0 
         self.resultado = None
         
@@ -146,7 +161,7 @@ class CenaCombate(CenaBase):
         self.hitboxes_itens = []
         self.itens_jogador = [{"nome": "Abridor de Lata"}, {"nome": "Peixeira"}]
 
-        self.mensagem_debug = "Início do Turno: Compre uma carta!"
+        self.mensagem_debug = dados_da_fase.get("mensagem_inicio", "Início do Turno: Jogue suas cartas!")
         self.debug = pygame.font.SysFont("Arial", 36)
         self.fonte_cartas = pygame.font.SysFont("Arial", 20) 
         self.fonte_vida = pygame.font.SysFont("Arial", 30, bold=True)
@@ -188,6 +203,7 @@ class CenaCombate(CenaBase):
                         self.carta_selecionada = None
                         self.index_carta_selecionada = None
                         self.slots_sacrificados_pendentes.clear() 
+                        self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
                         self.mensagem_debug = "Invocação cancelada. Suas criaturas foram salvas!"
                         continue
 
@@ -276,6 +292,7 @@ class CenaCombate(CenaBase):
                                                 
                                                 for idx in self.slots_sacrificados_pendentes:
                                                     self.slots_aliados[idx] = None
+                                                    self.fade_sacrificio[idx] = 0.0
                                                 self.slots_sacrificados_pendentes.clear() 
                                                 
                                                 self.animacoes.append({
@@ -300,6 +317,10 @@ class CenaCombate(CenaBase):
         for idx in range(4):
             if self.flash_aliado[idx] > 0: self.flash_aliado[idx] -= dt
             if self.flash_inimigo[idx] > 0: self.flash_inimigo[idx] -= dt
+            if idx in self.slots_sacrificados_pendentes:
+                self.fade_sacrificio[idx] = min(255.0, self.fade_sacrificio[idx] + dt * 0.25)
+            else:
+                self.fade_sacrificio[idx] = 0.0
 
         for anim in self.animacoes[:]:
             anim["progresso"] += dt * 0.0035
@@ -349,6 +370,8 @@ class CenaCombate(CenaBase):
                         if self.peso_balanca >= 8:
                             self.resultado = "vitoria"
                             self.mensagem_debug = "VITÓRIA! A balança tombou totalmente."
+                            self.terminou = True
+                            self.proxima_cena = "mapa" 
                             return
                     self.dano_aplicado = True
 
@@ -388,7 +411,14 @@ class CenaCombate(CenaBase):
                         self.mensagem_debug = "Você perdeu."
                         if self.vida_player <= 0:
                             self.mensagem_debug = "Você sucumbiu..."
+                            self.terminou = True
+                            self.proxima_cena = "game_over"
                             return
+                        else:
+                            self.mensagem_debug = "Você perdeu a rodada, retornando ao mapa..."
+                            self.terminou = True
+                            self.proxima_cena = "mapa"
+                            
 
                     self.turno_global += 1
                     self.turno_atual = "jogador"
@@ -608,32 +638,54 @@ class CenaCombate(CenaBase):
                 pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
                 
             elif self.estado_atual == "sacrificio" and self.slots_aliados[i] is not None:
-                esta_em_panico = True
-                tempo_ticks = pygame.time.get_ticks()
-                rect_desenho.x += int(math.sin(tempo_ticks * 0.03 + i * 12) * 3)
-                rect_desenho.y += int(math.cos(tempo_ticks * 0.03 + i * 7) * 3)
-                pulso_alfa = int(140 + 115 * math.sin(tempo_ticks * 0.015))
-                cor_borda = (pulso_alfa, 0, 0) 
-                pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
-                
-            elif self.estado_atual == "posicionamento" and (self.slots_aliados[i] is None or prometida_ao_abate):
-                cor_borda = (0, 255, 0) 
-                pygame.draw.rect(self.tela, cor_borda, rect_desenho, 8)
+                if esta_em_panico:
+                    tempo_ticks = pygame.time.get_ticks()
+                    rect_desenho.x += int(math.sin(tempo_ticks * 0.03 + i * 12) * 3)
+                    rect_desenho.y += int(math.cos(tempo_ticks * 0.03 + i * 7) * 3)
+                    pulso_alfa = int(140 + 115 * math.sin(tempo_ticks * 0.015))
+                    pygame.draw.rect(self.tela, (pulso_alfa, 0, 0), rect_desenho, 8)
+                    
+                elif self.estado_atual == "posicionamento" and (self.slots_aliados[i] is None or prometida_ao_abate):
+                    pygame.draw.rect(self.tela, (0, 255, 0), rect_desenho, 8)
 
-            if self.slots_aliados[i] and not prometida_ao_abate:
-                cor_texto = (0,0,0) if not esta_em_panico else (255,255,255)
-
-                if self.slots_aliados[i].imagem is not None:
-                    self.tela.blit(self.slots_aliados[i].imagem, (rect_desenho.x, rect_desenho.y))                
-                else:
-                    cor_corpo = (255, 30, 30) if self.flash_aliado[i] > 0 else ((100, 200, 100) if not esta_em_panico else (160, 80, 80))
-                    pygame.draw.rect(self.tela, cor_corpo, rect_desenho.inflate(-12, -12))
-                    txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
-                    self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
-                
-                cor_vida = (200, 0, 0) if esta_em_panico else (54, 32, 10)    
-                txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
-                self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
+                # Desenho da carta
+                if self.slots_aliados[i]:
+                    alpha_imagem = 255
+                    if prometida_ao_abate:
+                        alpha_imagem = max(0, 255 - int(self.fade_sacrificio[i]))
+                        
+                    if alpha_imagem > 0:
+                        cor_texto = (255,255,255) if esta_em_panico else (0,0,0)
+                        
+                        if self.slots_aliados[i].imagem is not None:
+                            img_render = self.slots_aliados[i].imagem.copy()
+                            if prometida_ao_abate:
+                                escurecimento = min(200, int(self.fade_sacrificio[i] * 1.5))
+                                surf_preta = pygame.Surface((144, 176), pygame.SRCALPHA)
+                                surf_preta.fill((0, 0, 0, escurecimento))
+                                img_render.blit(surf_preta, (0, 0))
+                                img_render.set_alpha(alpha_imagem)
+                            self.tela.blit(img_render, rect_desenho)
+                        else:
+                            cor_fundo = (160, 80, 80) if esta_em_panico else (100, 200, 100)
+                            if self.flash_aliado[i] > 0: cor_fundo = (255, 30, 30)
+                            
+                            surf_fallback = pygame.Surface((144, 176), pygame.SRCALPHA)
+                            surf_fallback.fill((*cor_fundo, alpha_imagem))
+                            
+                            if prometida_ao_abate:
+                                pygame.draw.rect(surf_fallback, (0, 0, 0, min(200, int(self.fade_sacrificio[i] * 1.5))), (0,0,144,176))
+                            
+                            self.tela.blit(surf_fallback, rect_desenho)
+                            txt = self.fonte_cartas.render(self.slots_aliados[i].nome, True, cor_texto)
+                            txt.set_alpha(alpha_imagem)
+                            self.tela.blit(txt, (rect_desenho.x + 10, rect_desenho.y + 20))
+                        
+                        cor_vida = (200, 0, 0) if esta_em_panico else (54, 32, 10)
+                        txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
+                        if prometida_ao_abate:
+                            txt_vida.set_alpha(alpha_imagem)
+                        self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 140))
     
         # mão do player
         for rect_carta, carta, i in self.hitboxes_mao:

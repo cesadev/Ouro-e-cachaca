@@ -467,11 +467,28 @@ class CenaTutorial(CenaBase):
     def desenhar(self):
         self.tela.blit(self.imagem_fundo, (0, 0))
 
+        # desenho da balança
         centro_x, centro_y, raio = 240, 350, 128
         angulo_rad = math.radians(self.peso_balanca * 2.5)
         dx, dy = math.cos(angulo_rad) * raio, math.sin(angulo_rad) * raio
-        pygame.draw.line(self.tela, (200, 180, 50), (centro_x - dx, centro_y + dy), (centro_x + dx, centro_y - dy), 8) 
+        esq_x, esq_y = centro_x - dx, centro_y + dy  
+        dir_x, dir_y = centro_x + dx, centro_y - dy  
 
+        pygame.draw.rect(self.tela, (90, 60, 30), (centro_x - 10, centro_y, 20, 80)) 
+        pygame.draw.polygon(self.tela, (70, 40, 20), [(centro_x-30, centro_y+80), (centro_x+30, centro_y+80), (centro_x+15, centro_y+50), (centro_x-15, centro_y+50)]) 
+        pygame.draw.line(self.tela, (200, 180, 50), (esq_x, esq_y), (dir_x, dir_y), 8) 
+        pygame.draw.circle(self.tela, (255, 215, 0), (centro_x, centro_y), 10) 
+
+        comp_corda = 40
+        pygame.draw.line(self.tela, (200, 200, 200), (esq_x, esq_y), (esq_x, esq_y + comp_corda), 2)
+        pygame.draw.polygon(self.tela, (180, 180, 180), [(esq_x-40, esq_y+comp_corda), (esq_x+40, esq_y+comp_corda), (esq_x+25, esq_y+comp_corda+15), (esq_x-25, esq_y+comp_corda+15)])
+        pygame.draw.line(self.tela, (200, 200, 200), (dir_x, dir_y), (dir_x, dir_y + comp_corda), 2)
+        pygame.draw.polygon(self.tela, (180, 180, 180), [(dir_x-40, dir_y+comp_corda), (dir_x+40, dir_y+comp_corda), (dir_x+25, dir_y+comp_corda+15), (dir_x-25, dir_y+comp_corda+15)])
+
+        txt_balanca = self.debug.render(f"{self.peso_balanca}", True, (255, 255, 255))
+        self.tela.blit(txt_balanca, (centro_x - txt_balanca.get_width()//2, centro_y - 30))
+
+        # campainha
         pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
         
         def desenhar_pilha(pos_rect, qtd, cor, img_verso=None):
