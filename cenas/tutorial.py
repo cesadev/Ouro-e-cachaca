@@ -8,6 +8,14 @@ from cenas.batalha import Carta
 class CenaTutorial(CenaBase):
     def __init__(self, tela):
         super().__init__(tela) 
+
+        tamanho_copo = (80, 96) 
+        try:
+            self.img_copo1 = pygame.transform.scale(pygame.image.load("assets/copo1.png").convert_alpha(), tamanho_copo)
+            self.img_copo2 = pygame.transform.scale(pygame.image.load("assets/copo2.png").convert_alpha(), tamanho_copo)
+        except FileNotFoundError:
+            self.img_copo1 = None
+            self.img_copo2 = None
         
         self.mao_jogador = [
             Carta("Perna Cabeluda", 0, 1, self._carregar_img("Perna"), 0, 1),
@@ -448,6 +456,8 @@ class CenaTutorial(CenaBase):
                 else: pygame.draw.rect(self.tela, (100, 200, 100), rect_desenho)
                 txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, (54, 32, 10))
                 self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
+
+
 
         for rect_carta, carta, i in self.hitboxes_mao:
             if carta.imagem: self.tela.blit(carta.imagem, rect_carta)

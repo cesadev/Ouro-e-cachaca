@@ -35,7 +35,15 @@ class Carta:
 class CenaCombate(CenaBase):
     def __init__(self, tela, deck_jogador, dados_da_fase):
         super().__init__(tela) 
-        
+        tamanho_copo = (80, 96) 
+
+        try:
+            self.img_copo1 = pygame.transform.scale(pygame.image.load("assets/copo1.png").convert_alpha(), tamanho_copo)
+            self.img_copo2 = pygame.transform.scale(pygame.image.load("assets/copo2.png").convert_alpha(), tamanho_copo)
+        except FileNotFoundError:
+            self.img_copo1 = None
+            self.img_copo2 = None
+
         self.deck_jogador = [
             Carta(c["nome"], c.get("dano", c.get("poder", 0)), c["vida"], c.get("imagem"), c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
             if isinstance(c, dict) else c
@@ -525,9 +533,16 @@ class CenaCombate(CenaBase):
 
         pygame.draw.rect(self.tela, (75, 0, 130), self.descricao_left_rect)   
         pygame.draw.rect(self.tela, (200, 162, 200), self.descricao_right_rect) 
-        for rect_vida in self.hitboxes_vida:
-            pygame.draw.rect(self.tela, (255, 182, 193), rect_vida) 
-            pygame.draw.rect(self.tela, (255, 255, 255), rect_vida, 3) 
+
+        for i, rect_vida in enumerate(self.hitboxes_vida):
+            if i == 0 and self.img_copo1 is not None:
+                self.tela.blit(self.img_copo1, rect_vida)
+            elif i == 1 and self.img_copo2 is not None:
+                self.tela.blit(self.img_copo2, rect_vida)
+            else:
+                pygame.draw.rect(self.tela, (255, 182, 193), rect_vida) 
+                pygame.draw.rect(self.tela, (255, 255, 255), rect_vida, 3)
+
         for rect_item, item in self.hitboxes_itens:
             pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
             pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2) 
