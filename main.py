@@ -66,6 +66,13 @@ def main():
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
+        
+        if proxima == "mapa":
+            print("Tutorial")
+            nova_cena = CenaTutorial(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
         pygame.display.flip()
 
     pygame.quit()

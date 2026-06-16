@@ -24,7 +24,8 @@ class CenaTutorial(CenaBase):
             Carta("Curupira", 2, 2, self._carregar_img("curupira"), 2, 1)
         ]
         self.deck_jogador = [
-            Carta("Timbu", 1, 1, self._carregar_img("timbu"), 1, 1)
+            Carta("Caboclo", 1, 1, self._carregar_img("caboclo"), 1, 1),
+            Carta("Caboclo", 1, 1, self._carregar_img("caboclo"), 1, 1)
         ]
         
         self.slots_aliados = [None, None, None, None]
@@ -61,6 +62,7 @@ class CenaTutorial(CenaBase):
         self.passo_tutorial = 0
         self.dialogos_pendentes = []
         self.dialogo_atual = ""
+        self.ja_avisou_sacrificio = False
         
         def gerar_bagunca(quantidade):
             return [(random.randint(-2, 2), random.randint(-2, 2), random.uniform(-5, 5)) for _ in range(quantidade)]
@@ -86,7 +88,7 @@ class CenaTutorial(CenaBase):
         self.fonte_cartas = pygame.font.SysFont("Arial", 20) 
         self.fonte_vida = pygame.font.SysFont("Arial", 30, bold=True)
         self.fonte_mini = pygame.font.SysFont("Arial", 14) 
-        self.fonte_dialogo = pygame.font.SysFont("Arial", 30)
+        self.fonte_dialogo = pygame.font.SysFont("Arial", 40)
         self.index_foco = None 
 
         self.adicionar_dialogos(["Joga a Perna Cabeluda"])
@@ -145,7 +147,7 @@ class CenaTutorial(CenaBase):
                             continue
                         
                         if self.campainha_rect.collidepoint(pos_mouse):
-                            if self.passo_tutorial == 3:
+                            if self.passo_tutorial == 3 or (self.passo_tutorial >= 6 or self.ja_comprou_neste_turno):
                                 self.turno_atual = "resolvendo_combate"
                                 self.fase_resolucao = "aliados"
                                 self.idx_atacante_atual = 0
@@ -185,6 +187,15 @@ class CenaTutorial(CenaBase):
                                         
                                         if sangue_acumulado >= self.sangue_necessario:
                                             self.estado_atual = "posicionamento"
+                                            if not self.ja_avisou_sacrificio:
+                                                for idx_sac in self.slots_sacrificados_pendentes:
+                                                    if self.slots_aliados[idx_sac].nome != "Perna Cabeluda":
+                                                        self.adicionar_dialogos([
+                                                            "Não se acanhe... o bicho foi sacrificado, mas não tirado do baralho.",
+                                                            "A sofrencia é real. Mas tu ainda vai ver ele de novo."
+                                                        ])
+                                                        self.ja_avisou_sacrificio = True
+                                                        break
                                     break
                                     
                         elif self.estado_atual == "posicionamento":
@@ -296,15 +307,17 @@ class CenaTutorial(CenaBase):
                     self.adicionar_dialogos([
                         "Não tem nada na frente do seu capelobo",
                         "O numéro lá embaixo na esquerda é o ataque do teu bixim: 1",
-                        "Seu capelobo me da 1 de dano. Quando eu tomo dano, eu desço um gole da minha breja.",
+                        "Seu capelobo me da 1 de dano.",
+                        "Quando eu tomo dano, eu desço um gole da minha breja.",
                         "O mesmo vale pra você.",
-                        "O lacre da latinha vai pra balança. Faça o meu lado descer pra ganhar."
+                        "O lacre da latinha vai pra balança.",
+                        "Faça o meu lado descer pra ganhar.",
                     ])
                 
-                slot_capelobo = 0
-                for i, c in enumerate(self.slots_aliados):
-                    if c and c.nome == "Capelobo": slot_capelobo = i
-                self.slots_inimigos[slot_capelobo] = Carta("Curupira", 3, 2, self._carregar_img("curupira"), 0, 1)
+                    slot_capelobo = 0
+                    for i, c in enumerate(self.slots_aliados):
+                        if c and c.nome == "Capelobo": slot_capelobo = i
+                    self.slots_inimigos[slot_capelobo] = Carta("Curupira", 3, 2, self._carregar_img("curupira"), 0, 1)
 
                 if self.passo_tutorial == 4:
                     self.passo_tutorial = 5
@@ -318,6 +331,24 @@ class CenaTutorial(CenaBase):
                 self.idx_atacante_atual = 0
                 self.progresso_ataque = 0.0
                 self.dano_aplicado = False
+                
+            if self.passo_tutorial == 6:
+                    self.passo_tutorial = 7
+                    self.adicionar_dialogos([
+                        "Como tu ainda é leigo, eu passo a minha vez.",
+                        "Escolha de novo..."
+                    ])
+                    self.turno_global += 1
+                    self.turno_atual = "jogador"
+                    self.fase_resolucao = None
+                    self.ja_comprou_neste_turno = False
+                    
+                    return
+            elif self.passo_tutorial >= 7:
+                    self.fase_resolucao = "inimigos"
+                    self.idx_atacante_atual = 0
+                    self.progresso_ataque = 0.0
+                    self.dano_aplicado = False
 
             elif self.fase_resolucao == "inimigos":
                 while self.idx_atacante_atual < 4:
@@ -342,7 +373,7 @@ class CenaTutorial(CenaBase):
                             "Escolhe entre comprar do teu baralho ou comprar uma perna cabeluda."
                         ])
                     return
-
+                
                 card_atacante = self.slots_inimigos[self.idx_atacante_atual]
                 self.progresso_ataque += dt * self.velocidade_ataque
                 
@@ -367,9 +398,16 @@ class CenaTutorial(CenaBase):
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
 
-        if self.passo_tutorial == 6 and self.peso_balanca >= 5: 
-            self.terminou = True
-            self.proxima_cena = "mapa"
+        if self.peso_balanca >= 8: 
+            if self.passo_tutorial < 99:
+                self.passo_tutorial = 99
+                self.adicionar_dialogos([
+                    "Ganhasse essa partida.",
+                    "Mas as próximas não vão ser moleza…"
+                ])
+            elif not self.dialogo_atual and not self.dialogos_pendentes:
+                self.terminou = True
+                self.proxima_cena = "mapa"
 
         self.hitboxes_vida.clear()
         for i in range(self.vida_player):
@@ -481,5 +519,4 @@ class CenaTutorial(CenaBase):
         for anim in self.animacoes:
             rect_render = pygame.Rect(anim["pos_atual"][0], anim["pos_atual"][1], 144, 176)
             if anim["carta"].imagem: self.tela.blit(anim["carta"].imagem, rect_render)
-
     

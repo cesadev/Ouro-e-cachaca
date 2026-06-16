@@ -1,5 +1,5 @@
 import pygame
-from cena_base import CenaBase
+from cenas.cena_base import CenaBase
 
 class CenaMapa(CenaBase):
     def __init__(self, tela, nodo_atual):
@@ -19,11 +19,9 @@ class CenaMapa(CenaBase):
         {"id": 1, "rect": pygame.Rect(250, 470, 80, 80), "destino": "carta", "proximos": [2]},
         {"id": 2, "rect": pygame.Rect(390, 310, 80, 80), "destino": "mochila", "proximos": [3]},
         {"id": 3, "rect": pygame.Rect(535, 510, 80, 80), "destino": "combate", "proximos": [4]},
-
         {"id": 4, "rect": pygame.Rect(665, 355, 80, 80), "destino": "cartas", "proximos": [5]},
         {"id": 5, "rect": pygame.Rect(740, 510, 80, 80), "destino": "selos", "proximos": [6]},
         {"id": 6, "rect": pygame.Rect(895, 395, 80, 80), "destino": "combate", "proximos": [7,8]},
-
         {"id": 7, "rect": pygame.Rect(1040, 260, 80, 80), "destino": "selos", "proximos": [9]},
         {"id": 8, "rect": pygame.Rect(1040, 530, 80, 80), "destino": "fogueira", "proximos": [9]},
         {"id": 9, "rect": pygame.Rect(1190, 400, 80, 80), "destino": "combate", "proximos": []}]
