@@ -7,6 +7,7 @@ from cenas.fases import fases_do_jogo
 from cenas.batalha import Carta
 from cenas.menu import Menu
 from cenas.tutorial import CenaTutorial
+from cenas.mapa import CenaMapa
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -68,8 +69,7 @@ def main():
             proxima = None
         
         if proxima == "mapa":
-            print("Tutorial")
-            nova_cena = CenaTutorial(tela)
+            nova_cena = CenaMapa(tela)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

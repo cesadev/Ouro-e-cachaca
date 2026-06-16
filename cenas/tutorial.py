@@ -21,7 +21,7 @@ class CenaTutorial(CenaBase):
             Carta("Perna Cabeluda", 0, 1, self._carregar_img("Perna"), 0, 1),
             Carta("Capelobo", 1, 3, self._carregar_img("Capelobo"), 1, 1),
             Carta("Curupira", 2, 2, self._carregar_img("curupira"), 2, 1),
-            Carta("Capelobo", 2, 2, self._carregar_img("capelobo"), 1, 1)
+            Carta("Capelobo", 1, 3, self._carregar_img("capelobo"), 1, 1)
         ]
         self.deck_jogador = [
             Carta("Caboclo", 1, 1, self._carregar_img("caboclo"), 1, 1),
@@ -41,6 +41,8 @@ class CenaTutorial(CenaBase):
         self.index_carta_selecionada = None
         self.sangue_necessario = 0
         self.slots_sacrificados_pendentes = [] 
+        #controle do tempo de sacrificio
+        self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0] 
         
         self.fase_resolucao = None       
         self.idx_atacante_atual = 0     
@@ -72,6 +74,7 @@ class CenaTutorial(CenaBase):
         largura_tela, altura_tela = tela.get_size()
         self.imagem_fundo = self._carregar_img("combate", scale=(largura_tela, altura_tela), convert=True) or pygame.Surface((largura_tela, altura_tela))
         self.img_perna = self._carregar_img("Perna")
+        self.img_verso = self._carregar_img("carta_verso")
         
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
         self.comprar_pernas_rect = pygame.Rect(1190, 465, 144, 176)
@@ -120,12 +123,14 @@ class CenaTutorial(CenaBase):
             if event.type == pygame.MOUSEBUTTONDOWN: 
                 pos_mouse = pygame.mouse.get_pos()
                 
+                # opção de cancelar com o botao direito
                 if event.button == 3:
                     if self.estado_atual in ["sacrificio", "posicionamento"]:
                         self.estado_atual = "normal"
                         self.carta_selecionada = None
                         self.index_carta_selecionada = None
                         self.slots_sacrificados_pendentes.clear() 
+                        self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0] # reseta a animação se cancelar
                         continue
 
                 if event.button == 1: 
@@ -147,7 +152,7 @@ class CenaTutorial(CenaBase):
                             continue
                         
                         if self.campainha_rect.collidepoint(pos_mouse):
-                            if self.passo_tutorial == 3 or (self.passo_tutorial >= 6 or self.ja_comprou_neste_turno):
+                            if self.passo_tutorial == 3 or (self.passo_tutorial >= 6 and self.ja_comprou_neste_turno):
                                 self.turno_atual = "resolvendo_combate"
                                 self.fase_resolucao = "aliados"
                                 self.idx_atacante_atual = 0
@@ -173,6 +178,7 @@ class CenaTutorial(CenaBase):
                                     self.estado_atual = "sacrificio"
                                     self.sangue_necessario = custo
                                     self.slots_sacrificados_pendentes.clear() 
+                                    self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
                                 else:
                                     self.index_carta_selecionada = self.index_foco
                                     self.carta_selecionada = carta_tentativa
@@ -206,8 +212,10 @@ class CenaTutorial(CenaBase):
                                     if slot_valido and not any(anim["slot_destino"] == i for anim in self.animacoes):
                                         rect_mao, _, _ = self.hitboxes_mao[self.index_carta_selecionada]
                                         
+                                        # Apaga a carta da mesa e reseta o fade
                                         for idx in self.slots_sacrificados_pendentes:
                                             self.slots_aliados[idx] = None
+                                            self.fade_sacrificio[idx] = 0.0
                                         self.slots_sacrificados_pendentes.clear() 
                                         
                                         self.animacoes.append({
@@ -232,6 +240,12 @@ class CenaTutorial(CenaBase):
         for idx in range(4):
             if self.flash_aliado[idx] > 0: self.flash_aliado[idx] -= dt
             if self.flash_inimigo[idx] > 0: self.flash_inimigo[idx] -= dt
+            
+            # Gerenciador do Fade Out para cartas sacrificadas (se quiser ajeitar, so ajeitar oq ta multiplicando)
+            if idx in self.slots_sacrificados_pendentes:
+                self.fade_sacrificio[idx] = min(255.0, self.fade_sacrificio[idx] + dt * 0.25)
+            else:
+                self.fade_sacrificio[idx] = 0.0
 
         for anim in self.animacoes[:]:
             anim["progresso"] += dt * 0.0035
@@ -311,15 +325,17 @@ class CenaTutorial(CenaBase):
                         "Quando eu tomo dano, eu desço um gole da minha breja.",
                         "O mesmo vale pra você.",
                         "O lacre da latinha vai pra balança.",
-                        "Faça o meu lado descer pra ganhar.",
+                        "Faça o meu lado descer pra ganhar."
                     ])
-                
                     slot_capelobo = 0
                     for i, c in enumerate(self.slots_aliados):
                         if c and c.nome == "Capelobo": slot_capelobo = i
+                    if len(self.slots_inimigos) < 4:
+                        self.slots_inimigos = [None, None, None, None]
                     self.slots_inimigos[slot_capelobo] = Carta("Curupira", 3, 2, self._carregar_img("curupira"), 0, 1)
+                    return
 
-                if self.passo_tutorial == 4:
+                elif self.passo_tutorial == 4:
                     self.passo_tutorial = 5
                     self.adicionar_dialogos([
                         "Teu capelobo tá no caminho do meu curupira",
@@ -327,12 +343,13 @@ class CenaTutorial(CenaBase):
                         "Ou seja, a vida do teu capelobo desceu",
                         "Os bixinhos morrem, se a vida descer pra 0."
                     ])
-                self.fase_resolucao = "inimigos"
-                self.idx_atacante_atual = 0
-                self.progresso_ataque = 0.0
-                self.dano_aplicado = False
+                    self.fase_resolucao = "inimigos"
+                    self.idx_atacante_atual = 0
+                    self.progresso_ataque = 0.0
+                    self.dano_aplicado = False
+                    return
                 
-            if self.passo_tutorial == 6:
+                elif self.passo_tutorial == 6:
                     self.passo_tutorial = 7
                     self.adicionar_dialogos([
                         "Como tu ainda é leigo, eu passo a minha vez.",
@@ -342,13 +359,14 @@ class CenaTutorial(CenaBase):
                     self.turno_atual = "jogador"
                     self.fase_resolucao = None
                     self.ja_comprou_neste_turno = False
-                    
                     return
-            elif self.passo_tutorial >= 7:
+                    
+                elif self.passo_tutorial >= 7:
                     self.fase_resolucao = "inimigos"
                     self.idx_atacante_atual = 0
                     self.progresso_ataque = 0.0
                     self.dano_aplicado = False
+                    return
 
             elif self.fase_resolucao == "inimigos":
                 while self.idx_atacante_atual < 4:
@@ -363,10 +381,10 @@ class CenaTutorial(CenaBase):
                     self.turno_global += 1
                     self.turno_atual = "jogador"
                     self.fase_resolucao = None
+                    self.ja_comprou_neste_turno = False
                     
                     if self.passo_tutorial == 5:
                         self.passo_tutorial = 6
-                        self.ja_comprou_neste_turno = False 
                         self.estado_atual = "fase_compra"
                         self.adicionar_dialogos([
                             "Agora é a tua vez...",
@@ -443,13 +461,11 @@ class CenaTutorial(CenaBase):
             
             for i, carta in enumerate(self.mao_jogador):
                 rect = rects_virtuais[i].copy()
-                if i == self.index_foco: rect.y -= 40 
+                if i == self.index_foco: rect.y -= 60 
                 self.hitboxes_mao.append((rect, carta, i))
 
     def desenhar(self):
-        
         self.tela.blit(self.imagem_fundo, (0, 0))
-
 
         centro_x, centro_y, raio = 240, 350, 128
         angulo_rad = math.radians(self.peso_balanca * 2.5)
@@ -457,16 +473,21 @@ class CenaTutorial(CenaBase):
         pygame.draw.line(self.tela, (200, 180, 50), (centro_x - dx, centro_y + dy), (centro_x + dx, centro_y - dy), 8) 
 
         pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
-
         
-        def desenhar_pilha(pos_rect, qtd, cor):
+        def desenhar_pilha(pos_rect, qtd, cor, img_verso=None):
             for i in range(qtd):
-                surf = pygame.Surface((144, 176))
-                surf.fill(cor)
-                self.tela.blit(surf, (pos_rect.x, pos_rect.y - (i * 2)))
+                if img_verso:
+                    self.tela.blit(img_verso, (pos_rect.x, pos_rect.y - (i * 2)))
+                else:
+                    surf = pygame.Surface((144, 176))
+                    surf.fill(cor)
+                    self.tela.blit(surf, (pos_rect.x, pos_rect.y - (i * 2)))
 
-        if self.pernas_disponiveis > 0: desenhar_pilha(self.comprar_pernas_rect, self.pernas_disponiveis, (255, 105, 97))
-        if len(self.deck_jogador) > 0: desenhar_pilha(self.comprar_deck_rect, len(self.deck_jogador), (174, 198, 207))
+        if self.pernas_disponiveis > 0: 
+            desenhar_pilha(self.comprar_pernas_rect, self.pernas_disponiveis, (255, 105, 97), self.img_verso)
+            
+        if len(self.deck_jogador) > 0: 
+            desenhar_pilha(self.comprar_deck_rect, len(self.deck_jogador), (174, 198, 207), self.img_verso)
 
         for rect_slot, i in self.hitboxes_slots_inimigos:
             rect_desenho = rect_slot.copy()
@@ -476,26 +497,56 @@ class CenaTutorial(CenaBase):
                 if self.slots_inimigos[i].imagem: self.tela.blit(self.slots_inimigos[i].imagem, rect_desenho)
                 else: pygame.draw.rect(self.tela, (200, 100, 100), rect_desenho)
                 txt_vida = self.fonte_vida.render(f"{self.slots_inimigos[i].vida}", True, (54, 32, 10))
-                self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
+                self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 142))
 
+        
         for rect_slot, i in self.hitboxes_slots_aliados:
             rect_desenho = rect_slot.copy()
-            if self.estado_atual == "sacrificio" and i in self.slots_sacrificados_pendentes:
+            
+            # A carta treme de medo se for a hora do sacrifício e AINDA NÃO tiver sido escolhida
+            if self.estado_atual == "sacrificio" and self.slots_aliados[i] is not None and i not in self.slots_sacrificados_pendentes:
                 rect_desenho.x += random.randint(-3, 3)
                 rect_desenho.y += random.randint(-3, 3)
+                
             if self.turno_atual == "resolvendo_combate" and self.fase_resolucao == "aliados" and self.idx_atacante_atual == i:
                 rect_desenho.y -= int(170 * math.sin(self.progresso_ataque * math.pi))
-            
-            if self.estado_atual == "posicionamento" and self.slots_aliados[i] is None:
-                pygame.draw.rect(self.tela, (0, 255, 0), rect_desenho, 6)
 
-            if self.slots_aliados[i] and i not in self.slots_sacrificados_pendentes:
-                if self.slots_aliados[i].imagem: self.tela.blit(self.slots_aliados[i].imagem, rect_desenho)
-                else: pygame.draw.rect(self.tela, (100, 200, 100), rect_desenho)
-                txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, (54, 32, 10))
-                self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
-
-
+            if self.slots_aliados[i]:
+                foi_sacrificada = (i in self.slots_sacrificados_pendentes)
+                
+                alpha_imagem = 255
+                if foi_sacrificada:
+                    alpha_imagem = max(0, 255 - int(self.fade_sacrificio[i]))
+                
+                if alpha_imagem > 0:
+                    if self.slots_aliados[i].imagem: 
+                        img_render = self.slots_aliados[i].imagem.copy()
+                        
+                        if foi_sacrificada:
+                           
+                            escurecimento = min(200, int(self.fade_sacrificio[i] * 1.5))
+                            surf_preta = pygame.Surface((144, 176), pygame.SRCALPHA)
+                            surf_preta.fill((0, 0, 0, escurecimento))
+                            img_render.blit(surf_preta, (0, 0))
+                            
+                            img_render.set_alpha(alpha_imagem)
+                            
+                        self.tela.blit(img_render, rect_desenho)
+                    else: 
+                        surf_fallback = pygame.Surface((144, 176), pygame.SRCALPHA)
+                        surf_fallback.fill((100, 200, 100, alpha_imagem))
+                        if foi_sacrificada:
+                            pygame.draw.rect(surf_fallback, (0, 0, 0, min(200, int(self.fade_sacrificio[i] * 1.5))), (0,0,144,176))
+                        self.tela.blit(surf_fallback, rect_desenho)
+                    
+                    cor_vida = (54, 32, 10)
+                    txt_vida = self.fonte_vida.render(f"{self.slots_aliados[i].vida}", True, cor_vida)
+                    
+                    if foi_sacrificada:
+                        txt_vida.set_alpha(alpha_imagem)
+                        
+                    self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
+        
 
         for rect_carta, carta, i in self.hitboxes_mao:
             if carta.imagem: self.tela.blit(carta.imagem, rect_carta)
@@ -519,4 +570,3 @@ class CenaTutorial(CenaBase):
         for anim in self.animacoes:
             rect_render = pygame.Rect(anim["pos_atual"][0], anim["pos_atual"][1], 144, 176)
             if anim["carta"].imagem: self.tela.blit(anim["carta"].imagem, rect_render)
-    

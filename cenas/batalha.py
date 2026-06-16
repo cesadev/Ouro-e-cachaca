@@ -130,7 +130,7 @@ class CenaCombate(CenaBase):
             self.img_perna = pygame.transform.scale(img_perna_original, (144, 176))
         except FileNotFoundError:
             self.img_perna = None
-
+        
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
         self.comprar_pernas_rect = pygame.Rect(1190, 465, 144, 176)
         self.comprar_deck_rect = pygame.Rect(1350, 465, 144, 176)
