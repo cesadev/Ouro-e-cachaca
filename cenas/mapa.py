@@ -25,12 +25,22 @@ class CenaMapa(CenaBase):
         {"id": 7, "rect": pygame.Rect(1040, 260, 80, 80), "destino": "selos", "proximos": [9]},
         {"id": 8, "rect": pygame.Rect(1040, 530, 80, 80), "destino": "fogueira", "proximos": [9]},
         {"id": 9, "rect": pygame.Rect(1190, 400, 80, 80), "destino": "combate", "proximos": []}]
+        
+        largura_tela = tela.get_width()
+        self.rect_inventario = pygame.Rect(largura_tela - 220, 30, 180, 50)
+        self.fonte_btn = pygame.font.SysFont("Arial", 22, bold=True)
                 
 
     def processar_eventos(self, eventos):
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 pos_mouse = pygame.mouse.get_pos()
+
+                if self.rect_inventario.collidepoint(pos_mouse):
+                    self.proxima_cena = "inventario"
+                    self.terminou = True
+                    return
+
                 opcoes_validas = self.nos_clicaveis[self.nodo_atual]["proximos"]
                 
                 for no in self.nos_clicaveis:
@@ -51,33 +61,14 @@ class CenaMapa(CenaBase):
             cor = (0, 255, 0) if no["id"] in opcoes_validas else (255, 0, 0)
             pygame.draw.rect(self.tela, cor, no["rect"], 3)
 
-            rect_atual = self.nos_clicaveis[self.nodo_atual]["rect"]
-            ponto_x = rect_atual.centerx
-            ponto_y = rect_atual.top - 10
+        rect_atual = self.nos_clicaveis[self.nodo_atual]["rect"]
+        ponto_x = rect_atual.centerx
+        ponto_y = rect_atual.top - 10
 
-            pygame.draw.polygon(self.tela, (255, 255, 0), [(ponto_x - 15, ponto_y - 20), (ponto_x + 15, ponto_y - 20),(ponto_x, ponto_y)])
+        pygame.draw.polygon(self.tela, (255, 255, 0), [(ponto_x - 15, ponto_y - 20), (ponto_x + 15, ponto_y - 20),(ponto_x, ponto_y)])
 
-if __name__ == "__main__":
-    pygame.init()
-    tela = pygame.display.set_mode((1536, 864)) 
-    pygame.display.set_caption("Teste do Mapa")
-    relogio = pygame.time.Clock()
-    
-    cena_teste = CenaMapa(tela, 0) 
-    
-    rodando = True
-    while rodando:
-        dt = relogio.tick(60)
-        eventos = pygame.event.get()
+        pygame.draw.rect(self.tela, (90, 50, 20), self.rect_inventario)
+        pygame.draw.rect(self.tela, (218, 165, 32), self.rect_inventario, 3)
         
-        for evento in eventos:
-            if evento.type == pygame.QUIT:
-                rodando = False
-
-        cena_teste.processar_eventos(eventos)
-        cena_teste.atualizar(dt)
-        cena_teste.desenhar()
-
-        pygame.display.flip()
-
-    pygame.quit()
+        txt_inv = self.fonte_btn.render("INVENTÁRIO", True, (255, 255, 255))
+        self.tela.blit(txt_inv, (self.rect_inventario.centerx - txt_inv.get_width()//2, self.rect_inventario.centery - txt_inv.get_height()//2))

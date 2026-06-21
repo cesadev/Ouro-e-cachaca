@@ -61,6 +61,7 @@ class Menu(CenaBase):
     for botao in self.botoes:
       iconeretangulo = botao["icone"].get_rect(center=botao["pos"])
       hover = iconeretangulo.collidepoint(posicaomouse)
+      
       #aumenta o ícone se o mouse estiver em cima
       if hover:
         icone = pygame.transform.scale(botao["icone"], (180, 180))
@@ -69,20 +70,3 @@ class Menu(CenaBase):
       iconeretangulo = icone.get_rect(center=botao["pos"])
       self.tela.blit(icone, iconeretangulo)
       botao["rect"] = iconeretangulo
-
-if __name__ == "__main__":
-  pygame.init()
-  tela = pygame.display.set_mode((1536, 864))
-  pygame.display.set_caption("Cartas e Cachaça")
-  relogio = pygame.time.Clock()
-
-  cena = Menu(tela)
-
-  #loop do jogo
-  while True:
-    deltatempo = relogio.tick(60) / 1000
-    eventos = pygame.event.get()
-    cena.processar_eventos(eventos)
-    cena.atualizar(deltatempo)
-    cena.desenhar()
-    pygame.display.update()

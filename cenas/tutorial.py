@@ -584,7 +584,7 @@ class CenaTutorial(CenaBase):
         if len(self.deck_jogador) > 0: 
             desenhar_pilha(self.comprar_deck_rect, len(self.deck_jogador), (174, 198, 207), self.img_verso)
 
-        #efeito de piscar o deck na parte do tutorial q pede pra tu comprar uma carta (Estava muito confuso antes, vc nem sabia onde deveria comprar)
+        #efeito de piscar o deck na parte do tutorial q pede pra tu comprar uma carta
         if self.dialogo_atual == "Aqui tu compra uma perna cabeluda.":
             pisca_alpha = int(abs(math.sin(pygame.time.get_ticks() * 0.005)) * 255)
             s_pisca = pygame.Surface(self.comprar_pernas_rect.size, pygame.SRCALPHA)
@@ -670,10 +670,6 @@ class CenaTutorial(CenaBase):
                 pygame.draw.rect(self.tela, (255, 255, 255), rect_carta)
                 txt = self.fonte_cartas.render(carta.nome, True, (0,0,0))
                 self.tela.blit(txt, (rect_carta.x + 5, rect_carta.y + 10))
-
-            # vida
-            txt_vida = self.fonte_vida.render(str(carta.vida), True, (54, 32, 10))
-            self.tela.blit(txt_vida, (rect_carta.x + rect_carta.width - 30, rect_carta.y + rect_carta.height - 30))
 
         # desenha a carta destacada por cima
         if indice_destaque is not None and indice_destaque < len(self.hitboxes_mao):

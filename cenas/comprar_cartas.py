@@ -23,7 +23,9 @@ class CenaEscolhaCarta(CenaBase):
         self.fonte_titulo = pygame.font.SysFont("Arial", 50, bold=True)
         self.fonte_cartas = pygame.font.SysFont("Arial", 20)
         self.fonte_dialogo = pygame.font.SysFont("Arial", 30)
-    
+        self.fonte_vida = pygame.font.SysFont("Arial", 25, bold=True)
+
+
         todas_as_cartas = [
             Carta("Curupira", 2, 2, self._carregar_img("curupira"), 2, 1),
             Carta("Capelobo", 1, 3, self._carregar_img("Capelobo"), 1, 1),
@@ -32,7 +34,7 @@ class CenaEscolhaCarta(CenaBase):
             Carta("Boitatá", 1, 1, self._carregar_img("boitata"), 1, 3),
             Carta("Mula Sem-Cabeça", 3, 4, self._carregar_img("mula"), 3, 1),
             Carta("Anhangá", 3, 7, self._carregar_img("anhanga"), 4, 1),
-            Carta("Caboclo D'água", 1, 1, self._carregar_img("caboboclo"), 1, 1),
+            Carta("Caboclo D'água", 1, 1, self._carregar_img("caboclo"), 1, 1),
             Carta("Comadre Florzinha", 1, 1, self._carregar_img("comadre"), 2, 1),
             Carta("Cobra Coral", 2, 2, self._carregar_img("cobra_coral"), 1, 1),
             Carta("Leão", 7, 7, self._carregar_img("leao"), 4, 1)
@@ -146,6 +148,9 @@ class CenaEscolhaCarta(CenaBase):
                         txt = self.fonte_cartas.render(carta.nome, True, (0,0,0))
                         self.tela.blit(txt, (rect_base.x + 10, rect_base.y + 10))
                     
+                    #usando o rect base ao invés do rect carta
+                    txt_vida = self.fonte_vida.render(str(carta.vida), True, (54, 32, 10))
+                    self.tela.blit(txt_vida, (rect_base.x + rect_base.width - 30, rect_base.y + rect_base.height - 30))
         if self.dialogo_atual:
             largura, altura = self.tela.get_size()
             rect_caixa = pygame.Rect(100, altura - 180, largura - 200, 150)
