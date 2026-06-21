@@ -21,7 +21,7 @@ class CenaTutorial(CenaBase):
             Carta("Perna Cabeluda", 0, 1, self._carregar_img("Perna"), 0, 1),
             Carta("Capelobo", 1, 3, self._carregar_img("Capelobo"), 1, 1),
             Carta("Curupira", 2, 2, self._carregar_img("curupira"), 2, 1),
-            Carta("Capelobo", 1, 3, self._carregar_img("capelobo"), 1, 1)
+            Carta("Capelobo", 1, 3, self._carregar_img("Capelobo"), 1, 1)
         ]
         self.deck_jogador = [
             Carta("Caboclo", 1, 1, self._carregar_img("caboclo"), 1, 1),
