@@ -135,8 +135,14 @@ class CenaTutorial(CenaBase):
 
                 if event.button == 1: 
                     if self.turno_atual == "jogador":
+                        
+                        # verificando os decks
                         if self.comprar_pernas_rect.collidepoint(pos_mouse):
-                            if not self.ja_comprou_neste_turno and self.pernas_disponiveis > 0:
+                            if self.passo_tutorial < 6:
+                                self.adicionar_dialogos(["Nada de comprar carta agora, jogue uma carta ou passe o turno!"])
+                            elif self.ja_comprou_neste_turno:
+                                self.adicionar_dialogos(["Só pode comprar uma carta por turno, nem invente de roubar no jogo!"])
+                            elif self.pernas_disponiveis > 0:
                                 self.mao_jogador.append(Carta("Perna Cabeluda", 0, 1, self.img_perna, 0, 1))
                                 self.pernas_disponiveis -= 1
                                 self.ja_comprou_neste_turno = True
@@ -144,15 +150,28 @@ class CenaTutorial(CenaBase):
                             continue
                         
                         elif self.comprar_deck_rect.collidepoint(pos_mouse):
-                            if not self.ja_comprou_neste_turno and len(self.deck_jogador) > 0:
+                            if self.passo_tutorial < 6:
+                                self.adicionar_dialogos(["Nada de comprar carta agora, jogue uma carta ou passe o turno!"])
+                            elif self.ja_comprou_neste_turno:
+                                self.adicionar_dialogos(["Só pode comprar uma carta por turno, nem invente de roubar no jogo!"])
+                            elif len(self.deck_jogador) > 0:
                                 carta = self.deck_jogador.pop(0)
                                 self.mao_jogador.append(carta)
                                 self.ja_comprou_neste_turno = True
                                 self.estado_atual = "normal"
                             continue
                         
+                        # verificando a campainha
                         if self.campainha_rect.collidepoint(pos_mouse):
-                            if self.passo_tutorial == 3 or (self.passo_tutorial >= 6 and self.ja_comprou_neste_turno):
+                            if self.passo_tutorial == 0:
+                                self.adicionar_dialogos(["Jogue uma carta antes de passar a sua vez..."])
+                            elif self.passo_tutorial == 1:
+                                self.adicionar_dialogos(["Falei pra tu jogar um Capelobo, rapaz."])
+                            elif self.estado_atual == "fase_compra":
+                                self.adicionar_dialogos(["Compre uma carta pra continuar!"])
+                            elif not self.ja_comprou_neste_turno and self.turno_global > 1:
+                                self.adicionar_dialogos(["Nesse jogo, tu tem que comprar uma carta antes de fazer qualquer coisa!"])
+                            elif self.passo_tutorial == 3 or (self.passo_tutorial >= 6 and self.ja_comprou_neste_turno):
                                 self.turno_atual = "resolvendo_combate"
                                 self.fase_resolucao = "aliados"
                                 self.idx_atacante_atual = 0
@@ -160,18 +179,45 @@ class CenaTutorial(CenaBase):
                                 self.dano_aplicado = False
                             continue
                         
+
+                        # Se chegou aqui, não clicou no deck nem na campainha
+                        # Se estiver na fase de compra, bloqueia e dá a bronca no jogador
+                        if self.estado_atual == "fase_compra":
+                            self.adicionar_dialogos(["Compre uma carta pra continuar!"])
+                            continue
+                        
+                        #logica das cartas
                         if self.estado_atual == "normal":
+
+                            if not self.ja_comprou_neste_turno and self.turno_global > 1:
+                                self.adicionar_dialogos(["Nesse jogo, tu tem que comprar uma carta antes de fazer qualquer coisa!"])
+                                continue
+
                             if self.index_foco is not None and self.index_foco < len(self.mao_jogador):
                                 carta_tentativa = self.mao_jogador[self.index_foco]
                                 
                                 if self.passo_tutorial == 0 and carta_tentativa.nome != "Perna Cabeluda":
+                                    self.adicionar_dialogos(["Eu falei pra tu jogar a perna cabeluda, rapaz."])
                                     continue
                                 if self.passo_tutorial == 1 and carta_tentativa.nome != "Capelobo":
+                                    self.adicionar_dialogos(["Falei pra tu jogar um Capelobo, rapaz."])
                                     continue
                                 if carta_tentativa.nome == "Curupira" and self.passo_tutorial < 6:
                                     continue
                                     
                                 custo = carta_tentativa.custo_sangue
+
+                                sangue_disponivel = sum(
+                                    carta.valor_sacrificio
+                                    for carta in self.slots_aliados
+                                    if carta is not None
+                                )
+                                if custo > sangue_disponivel:
+                                    self.adicionar_dialogos([
+                                    f"Não tem sacrifícios suficiente para invocar essa carta de custo: {custo}"
+                                    ])
+                                    continue
+
                                 if custo > 0:
                                     self.index_carta_selecionada = self.index_foco
                                     self.carta_selecionada = carta_tentativa
@@ -185,8 +231,10 @@ class CenaTutorial(CenaBase):
                                     self.estado_atual = "posicionamento"
                                 
                         elif self.estado_atual == "sacrificio":
+                            clicou_valido = False
                             for rect_slot, i in self.hitboxes_slots_aliados:
                                 if rect_slot.collidepoint(pos_mouse):
+                                    clicou_valido = True
                                     if self.slots_aliados[i] is not None and i not in self.slots_sacrificados_pendentes:
                                         self.slots_sacrificados_pendentes.append(i)
                                         sangue_acumulado = sum(self.slots_aliados[idx].valor_sacrificio for idx in self.slots_sacrificados_pendentes)
@@ -203,10 +251,20 @@ class CenaTutorial(CenaBase):
                                                         self.ja_avisou_sacrificio = True
                                                         break
                                     break
+                            
+                            # Se clicou em qualquer outro lugar da tela com o botão esquerdo, tira o foco da carta
+                            if not clicou_valido:
+                                self.estado_atual = "normal"
+                                self.carta_selecionada = None
+                                self.index_carta_selecionada = None
+                                self.slots_sacrificados_pendentes.clear() 
+                                self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
                                     
                         elif self.estado_atual == "posicionamento":
+                            clicou_valido = False
                             for rect_slot, i in self.hitboxes_slots_aliados:
                                 if rect_slot.collidepoint(pos_mouse):
+                                    clicou_valido = True
                                     slot_valido = (self.slots_aliados[i] is None or i in self.slots_sacrificados_pendentes)
                                     
                                     if slot_valido and not any(anim["slot_destino"] == i for anim in self.animacoes):
@@ -232,6 +290,15 @@ class CenaTutorial(CenaBase):
                                         self.carta_selecionada = None
                                         self.index_carta_selecionada = None
                                     break
+                                    
+                            # Se clicou em qualquer outro lugar da tela com o botão esquerdo, tira o foco da carta
+                            if not clicou_valido:
+                                self.estado_atual = "normal"
+                                self.carta_selecionada = None
+                                self.index_carta_selecionada = None
+                                self.slots_sacrificados_pendentes.clear() 
+                                self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
+
 
     def atualizar(self, dt):
         if self.dialogo_atual:
@@ -319,8 +386,8 @@ class CenaTutorial(CenaBase):
                 if self.passo_tutorial == 3:
                     self.passo_tutorial = 4
                     self.adicionar_dialogos([
-                        "Não tem nada na frente do seu capelobo",
-                        "O numéro lá embaixo na esquerda é o ataque do teu bixim: 1",
+                        "Agora tem um Curupira na frente do seu capelobo",
+                        "O numéro lá embaixo na esquerda da carta é o ataque do teu bixim: 1",
                         "Seu capelobo me da 1 de dano.",
                         "Quando eu tomo dano, eu desço um gole da minha breja.",
                         "O mesmo vale pra você.",
@@ -339,8 +406,8 @@ class CenaTutorial(CenaBase):
                     self.passo_tutorial = 5
                     self.adicionar_dialogos([
                         "Teu capelobo tá no caminho do meu curupira",
-                        "Meu curupira causa 3 de dano no teu capelobo",
-                        "Ou seja, a vida do teu capelobo desceu",
+                        "Meu curupira causará 3 de dano no teu capelobo",
+                        "Ou seja, a vida do teu capelobo descerá",
                         "Os bixinhos morrem, se a vida descer pra 0."
                     ])
                     self.fase_resolucao = "inimigos"
@@ -386,9 +453,12 @@ class CenaTutorial(CenaBase):
                     if self.passo_tutorial == 5:
                         self.passo_tutorial = 6
                         self.estado_atual = "fase_compra"
+                        
+                        # atualizei alguns diálogos pois estava confuso para o jogador.
                         self.adicionar_dialogos([
                             "Agora é a tua vez...",
-                            "Escolhe entre comprar do teu baralho ou comprar uma perna cabeluda."
+                            "Aqui tu compra uma perna cabeluda.",
+                            "Aqui tu compra uma carta do teu baralho."
                         ])
                     return
                 
@@ -461,7 +531,9 @@ class CenaTutorial(CenaBase):
             
             for i, carta in enumerate(self.mao_jogador):
                 rect = rects_virtuais[i].copy()
-                if i == self.index_foco: rect.y -= 60 
+                # A carta selecionada também fica levantada
+                if i == self.index_foco or i == self.index_carta_selecionada: 
+                    rect.y -= 60 
                 self.hitboxes_mao.append((rect, carta, i))
 
     def desenhar(self):
@@ -505,6 +577,19 @@ class CenaTutorial(CenaBase):
             
         if len(self.deck_jogador) > 0: 
             desenhar_pilha(self.comprar_deck_rect, len(self.deck_jogador), (174, 198, 207), self.img_verso)
+
+        #efeito de piscar o deck na parte do tutorial q pede pra tu comprar uma carta (Estava muito confuso antes, vc nem sabia onde deveria comprar)
+        if self.dialogo_atual == "Aqui tu compra uma perna cabeluda.":
+            pisca_alpha = int(abs(math.sin(pygame.time.get_ticks() * 0.005)) * 255)
+            s_pisca = pygame.Surface(self.comprar_pernas_rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(s_pisca, (255, 215, 0, pisca_alpha), s_pisca.get_rect(), 6, border_radius=5)
+            self.tela.blit(s_pisca, (self.comprar_pernas_rect.x, self.comprar_pernas_rect.y - 20))
+            
+        elif self.dialogo_atual == "Aqui tu compra uma carta do teu baralho.":
+            pisca_alpha = int(abs(math.sin(pygame.time.get_ticks() * 0.005)) * 255)
+            s_pisca = pygame.Surface(self.comprar_deck_rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(s_pisca, (255, 215, 0, pisca_alpha), s_pisca.get_rect(), 6, border_radius=5)
+            self.tela.blit(s_pisca, (self.comprar_deck_rect.x, self.comprar_deck_rect.y))
 
         for rect_slot, i in self.hitboxes_slots_inimigos:
             rect_desenho = rect_slot.copy()
@@ -564,13 +649,39 @@ class CenaTutorial(CenaBase):
                         
                     self.tela.blit(txt_vida, (rect_desenho.x + 112, rect_desenho.y + 144))
         
+        indice_destaque = self.index_carta_selecionada
+        if indice_destaque is None:
+            indice_destaque = self.index_foco
 
+        # desenha todas as cartas normal menos a de destaque
         for rect_carta, carta, i in self.hitboxes_mao:
-            if carta.imagem: self.tela.blit(carta.imagem, rect_carta)
-            else: 
+            if i == indice_destaque:
+                continue
+
+            if carta.imagem:
+                self.tela.blit(carta.imagem, rect_carta)
+            else:
                 pygame.draw.rect(self.tela, (255, 255, 255), rect_carta)
                 txt = self.fonte_cartas.render(carta.nome, True, (0,0,0))
                 self.tela.blit(txt, (rect_carta.x + 5, rect_carta.y + 10))
+
+            # vida
+            txt_vida = self.fonte_vida.render(str(carta.vida), True, (54, 32, 10))
+            self.tela.blit(txt_vida, (rect_carta.x + rect_carta.width - 30, rect_carta.y + rect_carta.height - 30))
+
+        # desenha a carta destacada por cima
+        if indice_destaque is not None and indice_destaque < len(self.hitboxes_mao):
+            rect_carta, carta, i = self.hitboxes_mao[indice_destaque]
+
+            if carta.imagem:
+                self.tela.blit(carta.imagem, rect_carta)
+            else:
+                pygame.draw.rect(self.tela, (255, 255, 255), rect_carta)
+                txt = self.fonte_cartas.render(carta.nome, True, (0,0,0))
+                self.tela.blit(txt, (rect_carta.x + 5, rect_carta.y + 10))
+
+            txt_vida = self.fonte_vida.render(str(carta.vida), True, (54, 32, 10))
+            self.tela.blit(txt_vida, (rect_carta.x + rect_carta.width - 30, rect_carta.y + rect_carta.height - 30))
 
         if self.dialogo_atual:
             largura, altura = self.tela.get_size()
