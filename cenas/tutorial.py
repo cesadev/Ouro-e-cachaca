@@ -76,10 +76,12 @@ class CenaTutorial(CenaBase):
         self.img_perna = self._carregar_img("Perna")
         self.img_verso = self._carregar_img("carta_verso")
         
+        
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
         self.comprar_pernas_rect = pygame.Rect(1190, 465, 144, 176)
         self.comprar_deck_rect = pygame.Rect(1350, 465, 144, 176)
-        
+        self.img_campainha = self._carregar_img("campainha", scale=(120, 120))
+
         self.hitboxes_mao = [] 
         self.hitboxes_slots_aliados = [] 
         self.hitboxes_slots_inimigos = []
@@ -561,7 +563,11 @@ class CenaTutorial(CenaBase):
         self.tela.blit(txt_balanca, (centro_x - txt_balanca.get_width()//2, centro_y - 30))
 
         # campainha
-        pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
+        if self.img_campainha:
+            self.tela.blit(self.img_campainha, self.campainha_rect)
+        else:
+            # se o asset n funcionar
+            pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
         
         def desenhar_pilha(pos_rect, qtd, cor, img_verso=None):
             for i in range(qtd):
