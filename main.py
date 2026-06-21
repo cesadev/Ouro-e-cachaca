@@ -9,6 +9,7 @@ from cenas.menu import Menu
 from cenas.tutorial import CenaTutorial
 from cenas.mapa import CenaMapa
 from cenas.comprar_cartas import CenaEscolhaCarta
+from cenas.inventario import CenaInventario
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -28,12 +29,13 @@ def efeito_transicao(tela, cena_nova):
         tela.blit(superficie_fade, (0, 0))
         pygame.display.update()
         relogio.tick(60)    
+
 def main():
     pygame.init()
     
     LARGURA, ALTURA = 1536, 864
     tela = pygame.display.set_mode((LARGURA, ALTURA))
-    pygame.display.set_caption("Meu Jogo - RPG")
+    pygame.display.set_caption("Ouro e Cachaça")
     relogio = pygame.time.Clock()
 
     cena_atual = Menu(tela)
@@ -42,13 +44,32 @@ def main():
     nivel_batalha_global = 1
     nodo_atual_global = 0
     
-    # A CARTAS GLOBAIS DO PLAYER
-    deck_jogador_global =  [
-        Carta("Capelobo", 1, 3, None, 1, 1),
-        Carta("Curupira", 2, 2,  None, 2, 1),
-        Carta("Capelobo", 1, 3,  None, 1, 1),
-        Carta("Caboclo", 1, 1, None,1, 1),
-        Carta("Caboclo", 1, 1, None, 1, 1)]
+    try:
+        img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
+    except FileNotFoundError:
+        img_capelobo = None
+        print("AVISO: Imagem do Capelobo não encontrada! Verifica o nome na pasta assets.")
+
+    try:
+        img_curupira = pygame.image.load("assets/curupira.png").convert_alpha()
+    except FileNotFoundError:
+        img_curupira = None
+        print("AVISO: Imagem do Curupira não encontrada! Verifica o nome na pasta assets.")
+
+    try:
+        img_caboclo = pygame.image.load("assets/caboclo.png").convert_alpha()
+    except FileNotFoundError:
+        img_caboclo = None
+        print("AVISO: Imagem do Caboclo não encontrada! Verifica o nome na pasta assets.")
+
+    #cartas iniciais (globais)
+    deck_jogador_global = [
+        Carta("Capelobo", 1, 3, img_capelobo, 1, 1),
+        Carta("Curupira", 2, 2, img_curupira, 2, 1),
+        Carta("Capelobo", 1, 3, img_capelobo, 1, 1),
+        Carta("Caboclo", 1, 1, img_caboclo, 1, 1),
+        Carta("Caboclo", 1, 1, img_caboclo, 1, 1)
+    ]
 
     rodando = True
     proxima = None
@@ -98,6 +119,12 @@ def main():
         
         if proxima == "mapa":
             nova_cena = CenaMapa(tela, nodo_atual_global) 
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        if proxima == "inventario":
+            nova_cena = CenaInventario(tela, deck_jogador_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
