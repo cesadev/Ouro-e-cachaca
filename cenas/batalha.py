@@ -44,6 +44,16 @@ class CenaCombate(CenaBase):
             self.img_copo1 = None
             self.img_copo2 = None
 
+        try:
+            img_perna_original = pygame.image.load("assets/Perna.png").convert_alpha()
+            self.img_perna = pygame.transform.scale(img_perna_original, (144, 176))
+        except FileNotFoundError:
+            self.img_perna = None
+
+        self.img_verso = self._carregar_img("carta_verso")
+        self.img_campainha = self._carregar_img("campainha", scale=(120, 120))
+
+
         self.deck_jogador = [
             Carta(c["nome"], c.get("dano", c.get("poder", 0)), c["vida"], c.get("imagem"), c.get("custo_sangue", 0), c.get("valor_sacrificio", 1))
             if isinstance(c, dict) else c
@@ -84,8 +94,7 @@ class CenaCombate(CenaBase):
         self.idx_atacante_atual = 0     
         self.progresso_ataque = 0.0     
         self.dano_aplicado = False      
-        self.tempo_espera_fase = 0.0 
-        self.velocidade_ataque = 0.002  
+        self.velocidade_ataque = 0.004
         
         self.flash_aliado = [0, 0, 0, 0]
         self.flash_inimigo = [0, 0, 0, 0]
@@ -115,22 +124,12 @@ class CenaCombate(CenaBase):
         self.pernas_disponiveis = 10 
         self.vida_player = vida_player
         self.peso_balanca = 0 
-        self.resultado = None
         
-        def gerar_bagunca_cumulativa(quantidade):
-            desvios = []
-            x_atual, y_atual = 0.0, 0.0
-            tendencia_x = random.uniform(-0.6, 0.6) 
-            tendencia_y = random.uniform(-0.2, 0.2)
-            for _ in range(quantidade):
-                x_atual += tendencia_x + random.uniform(-0.4, 0.4)
-                y_atual += tendencia_y + random.uniform(-0.4, 0.4)
-                angulo = random.uniform(-6.0, 6.0) 
-                desvios.append((int(x_atual), int(y_atual), angulo))
-            return desvios
-        
-        self.bagunca_pernas = gerar_bagunca_cumulativa(15)
-        self.bagunca_deck = gerar_bagunca_cumulativa(40)
+        def gerar_bagunca(quantidade):
+            return [(random.randint(-2, 2), random.randint(-2, 2), random.uniform(-5, 5)) for _ in range(quantidade)]
+            
+        self.bagunca_pernas = gerar_bagunca(15)
+        self.bagunca_deck = gerar_bagunca(40)
         
         largura_tela, altura_tela = tela.get_size()
         try:
@@ -139,12 +138,6 @@ class CenaCombate(CenaBase):
         except FileNotFoundError:
             self.imagem_fundo = pygame.Surface((largura_tela, altura_tela))
             self.imagem_fundo.fill((30, 30, 30))
-
-        try:
-            img_perna_original = pygame.image.load("assets/Perna.png").convert_alpha()
-            self.img_perna = pygame.transform.scale(img_perna_original, (144, 176))
-        except FileNotFoundError:
-            self.img_perna = None
         
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
         self.comprar_pernas_rect = pygame.Rect(1190, 465, 144, 176)
@@ -167,6 +160,15 @@ class CenaCombate(CenaBase):
         self.fonte_vida = pygame.font.SysFont("Arial", 30, bold=True)
         self.fonte_mini = pygame.font.SysFont("Arial", 14) 
         self.index_foco = None 
+        
+
+    def _carregar_img(self, nome, scale=(144, 176), convert=False):
+        try:
+            img = pygame.image.load(f"assets/{nome}.png")
+            img = img.convert() if convert else img.convert_alpha()
+            return pygame.transform.scale(img, scale)
+        except FileNotFoundError:
+            return None
         
     def _carregar_intencoes_inimigas_do_turno(self, turno):
         """Varre o script do turno e adiciona spawns de objetos Carta na fila correspondente"""
@@ -194,125 +196,299 @@ class CenaCombate(CenaBase):
 
     def processar_eventos(self, eventos):
         for event in eventos:
-            if event.type == pygame.MOUSEBUTTONDOWN: 
-                pos_mouse = pygame.mouse.get_pos()
-                
-                if event.button == 3: 
-                    if self.estado_atual in ["sacrificio", "posicionamento"]:
-                        self.estado_atual = "normal"
-                        self.carta_selecionada = None
-                        self.index_carta_selecionada = None
-                        self.slots_sacrificados_pendentes.clear() 
-                        self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
-                        self.mensagem_debug = "Invocação cancelada. Suas criaturas foram salvas!"
-                        continue
+            if event.type != pygame.MOUSEBUTTONDOWN:
+                continue
 
-                if event.button == 1: 
-                    if self.turno_atual == "jogador":
-                        comprou_agora = False
-                        
-                        if self.comprar_pernas_rect.collidepoint(pos_mouse):
-                            if not self.ja_comprou_neste_turno and self.pernas_disponiveis > 0:
-                                self.mao_jogador.append(Carta("Perna Cabeluda", 0, 1, self.img_perna, 0, 1))
-                                self.pernas_disponiveis -= 1
-                                self.ja_comprou_neste_turno = True
-                                comprou_agora = True
-                                self.mensagem_debug = "Perna na mão!"
-                        
-                        elif self.comprar_deck_rect.collidepoint(pos_mouse):
-                            if not self.ja_comprou_neste_turno and len(self.deck_jogador) > 0:
-                                carta = self.deck_jogador.pop(0)
-                                self.mao_jogador.append(carta)
-                                self.ja_comprou_neste_turno = True
-                                comprou_agora = True
-                                self.mensagem_debug = f"Comprou: {carta.nome}"
-                        
-                        if comprou_agora:
+            pos_mouse = pygame.mouse.get_pos()
+
+            # CANCELAR AÇÃO
+            if event.button == 3:
+                if self.estado_atual in ["sacrificio", "posicionamento"]:
+                    self.estado_atual = "normal"
+                    self.carta_selecionada = None
+                    self.index_carta_selecionada = None
+                    self.slots_sacrificados_pendentes.clear()
+                    self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
+                    self.mensagem_debug = "Ação cancelada."
+                continue
+
+            if event.button != 1:
+                continue
+
+            if self.turno_atual != "jogador":
+                continue
+
+            # ==========================
+            # COMPRA DE CARTAS
+            # ==========================
+
+            if self.comprar_pernas_rect.collidepoint(pos_mouse):
+
+                if self.ja_comprou_neste_turno:
+                    self.mensagem_debug = "Só pode comprar uma carta por turno."
+                    continue
+
+                if self.pernas_disponiveis > 0:
+                    self.mao_jogador.append(
+                        Carta(
+                            "Perna Cabeluda",
+                            0,
+                            1,
+                            self.img_perna,
+                            0,
+                            1
+                        )
+                    )
+
+                    self.pernas_disponiveis -= 1
+                    self.ja_comprou_neste_turno = True
+                    self.estado_atual = "normal"
+                    self.mensagem_debug = "Comprou uma Perna."
+
+                continue
+
+            elif self.comprar_deck_rect.collidepoint(pos_mouse):
+
+                if self.ja_comprou_neste_turno:
+                    self.mensagem_debug = "Só pode comprar uma carta por turno."
+                    continue
+
+                if len(self.deck_jogador) > 0:
+                    carta = self.deck_jogador.pop(0)
+
+                    self.mao_jogador.append(carta)
+
+                    self.ja_comprou_neste_turno = True
+                    self.estado_atual = "normal"
+                    self.mensagem_debug = f"Comprou {carta.nome}"
+
+                continue
+
+            # ==========================
+            # CAMPAINHA
+            # ==========================
+
+            if self.campainha_rect.collidepoint(pos_mouse):
+
+                if self.estado_atual == "fase_compra":
+                    self.mensagem_debug = "Compre uma carta antes."
+                    continue
+
+                if not self.ja_comprou_neste_turno and self.turno_global > 1:
+                    self.mensagem_debug = "Você precisa comprar uma carta primeiro."
+                    continue
+
+                self.turno_atual = "resolvendo_combate"
+
+                self.fase_resolucao = "aliados"
+
+                self.idx_atacante_atual = 0
+                self.progresso_ataque = 0.0
+                self.dano_aplicado = False
+
+                self.mensagem_debug = "Combate iniciado."
+
+                continue
+
+            # ==========================
+            # BLOQUEIO DA FASE DE COMPRA
+            # ==========================
+
+            if self.estado_atual == "fase_compra":
+                self.mensagem_debug = "Compre uma carta primeiro."
+                continue
+
+            # ==========================
+            # ESTADO NORMAL
+            # ==========================
+
+            if self.estado_atual == "normal":
+
+                if not self.ja_comprou_neste_turno and self.turno_global > 1:
+                    self.mensagem_debug = "Você precisa comprar uma carta primeiro."
+                    continue
+
+                if self.index_foco is None:
+                    continue
+
+                if self.index_foco >= len(self.mao_jogador):
+                    continue
+
+                carta_tentativa = self.mao_jogador[self.index_foco]
+
+                custo = carta_tentativa.custo_sangue
+
+                sangue_disponivel = sum(
+                    carta.valor_sacrificio
+                    for carta in self.slots_aliados
+                    if carta is not None
+                )
+
+                if custo > sangue_disponivel:
+                    self.mensagem_debug = (
+                        f"Necessário {custo} sangue."
+                    )
+                    continue
+
+                if custo > 0:
+
+                    self.index_carta_selecionada = self.index_foco
+                    self.carta_selecionada = carta_tentativa
+
+                    self.estado_atual = "sacrificio"
+
+                    self.sangue_necessario = custo
+
+                    self.slots_sacrificados_pendentes.clear()
+
+                    self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
+
+                    self.mensagem_debug = (
+                        f"Selecione sacrifícios ({custo})"
+                    )
+
+                else:
+
+                    self.index_carta_selecionada = self.index_foco
+                    self.carta_selecionada = carta_tentativa
+
+                    self.estado_atual = "posicionamento"
+
+                    self.mensagem_debug = (
+                        "Escolha um slot."
+                    )
+
+            # ==========================
+            # SACRIFÍCIO
+            # ==========================
+
+            elif self.estado_atual == "sacrificio":
+
+                clicou_valido = False
+
+                for rect_slot, i in self.hitboxes_slots_aliados:
+
+                    if rect_slot.collidepoint(pos_mouse):
+
+                        clicou_valido = True
+
+                        if (
+                            self.slots_aliados[i] is not None
+                            and i not in self.slots_sacrificados_pendentes
+                        ):
+
+                            self.slots_sacrificados_pendentes.append(i)
+
+                            sangue_acumulado = sum(
+                                self.slots_aliados[idx].valor_sacrificio
+                                for idx in self.slots_sacrificados_pendentes
+                            )
+
+                            if sangue_acumulado >= self.sangue_necessario:
+
+                                self.estado_atual = "posicionamento"
+
+                                self.mensagem_debug = (
+                                    "Sacrifício concluído."
+                                )
+
+                        break
+
+                if not clicou_valido:
+
+                    self.estado_atual = "normal"
+
+                    self.carta_selecionada = None
+                    self.index_carta_selecionada = None
+
+                    self.slots_sacrificados_pendentes.clear()
+
+                    self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
+
+            # ==========================
+            # POSICIONAMENTO
+            # ==========================
+
+            elif self.estado_atual == "posicionamento":
+
+                clicou_valido = False
+
+                for rect_slot, i in self.hitboxes_slots_aliados:
+
+                    if rect_slot.collidepoint(pos_mouse):
+
+                        clicou_valido = True
+
+                        slot_valido = (
+                            self.slots_aliados[i] is None
+                            or i in self.slots_sacrificados_pendentes
+                        )
+
+                        if (
+                            slot_valido
+                            and not any(
+                                anim["slot_destino"] == i
+                                for anim in self.animacoes
+                            )
+                        ):
+
+                            rect_mao, _, _ = (
+                                self.hitboxes_mao[
+                                    self.index_carta_selecionada
+                                ]
+                            )
+
+                            for idx in self.slots_sacrificados_pendentes:
+                                self.slots_aliados[idx] = None
+                                self.fade_sacrificio[idx] = 0.0
+
+                            self.slots_sacrificados_pendentes.clear()
+
+                            self.animacoes.append({
+                                "carta": self.carta_selecionada.copy(),
+                                "pos_inicial": (
+                                    rect_mao.x,
+                                    rect_mao.y
+                                ),
+                                "pos_final": (
+                                    rect_slot.x,
+                                    rect_slot.y
+                                ),
+                                "pos_atual": [
+                                    rect_mao.x,
+                                    rect_mao.y
+                                ],
+                                "progresso": 0.0,
+                                "slot_destino": i
+                            })
+
+                            self.mao_jogador.pop(
+                                self.index_carta_selecionada
+                            )
+
                             self.estado_atual = "normal"
-                            continue 
-                        
-                        if self.estado_atual == "fase_compra":
-                            if self.campainha_rect.collidepoint(pos_mouse):
-                                self.mensagem_debug = "Compre uma carta antes de passar a vez."
-                        
-                        else:
-                            if self.campainha_rect.collidepoint(pos_mouse):
-                                self.turno_atual = "resolvendo_combate"
-                                self.fase_resolucao = "aliados"
-                                self.idx_atacante_atual = 0
-                                self.progresso_ataque = 0.0
-                                self.dano_aplicado = False
-                                self.mensagem_debug = "Seu ataque começou..."
-                                
-                            else:
-                                if self.estado_atual == "normal":
-                                    if self.index_foco is not None and self.index_foco < len(self.mao_jogador):
-                                        carta_tentativa = self.mao_jogador[self.index_foco]
-                                        custo = carta_tentativa.custo_sangue
-                                        sangue_disponivel = sum(slot.valor_sacrificio for slot in self.slots_aliados if slot is not None)
-                                        
-                                        if custo > 0:
-                                            if sangue_disponivel < custo:
-                                                self.mensagem_debug = "Sangue insuficiente no tabuleiro!"
-                                            else:
-                                                self.index_carta_selecionada = self.index_foco
-                                                self.carta_selecionada = carta_tentativa
-                                                self.estado_atual = "sacrificio"
-                                                self.sangue_necessario = custo
-                                                self.slots_sacrificados_pendentes.clear() 
-                                                self.mensagem_debug = f"SACRIFÍCIO: Escolha {custo} criatura(s) para abater!"
-                                        else:
-                                            self.index_carta_selecionada = self.index_foco
-                                            self.carta_selecionada = carta_tentativa
-                                            self.estado_atual = "posicionamento"
-                                            self.mensagem_debug = "POSICIONAMENTO: Escolha um slot aliado vazio."
-                                
-                                elif self.estado_atual == "sacrificio":
-                                    for rect_slot, i in self.hitboxes_slots_aliados:
-                                        if rect_slot.collidepoint(pos_mouse):
-                                            if self.slots_aliados[i] is not None and i not in self.slots_sacrificados_pendentes:
-                                                self.slots_sacrificados_pendentes.append(i)
-                                                sangue_acumulado = sum(self.slots_aliados[idx].valor_sacrificio for idx in self.slots_sacrificados_pendentes)
-                                                
-                                                if sangue_acumulado >= self.sangue_necessario:
-                                                    self.estado_atual = "posicionamento"
-                                                    self.mensagem_debug = f"Sacrifício pronto! Escolha onde baixar o {self.carta_selecionada.nome}."
-                                                else:
-                                                    restante = self.sangue_necessario - sangue_acumulado
-                                                    self.mensagem_debug = f"Marcado! Faltam mais {restante} de sangue."
-                                            break
-                                            
-                                elif self.estado_atual == "posicionamento":
-                                    for rect_slot, i in self.hitboxes_slots_aliados:
-                                        if rect_slot.collidepoint(pos_mouse):
-                                            slot_valido = (self.slots_aliados[i] is None or i in self.slots_sacrificados_pendentes)
-                                            
-                                            if slot_valido and not any(anim["slot_destino"] == i for anim in self.animacoes):
-                                                rect_mao, _, _ = self.hitboxes_mao[self.index_carta_selecionada]
-                                                
-                                                for idx in self.slots_sacrificados_pendentes:
-                                                    self.slots_aliados[idx] = None
-                                                    self.fade_sacrificio[idx] = 0.0
-                                                self.slots_sacrificados_pendentes.clear() 
-                                                
-                                                self.animacoes.append({
-                                                    "carta": self.carta_selecionada.copy(),
-                                                    "pos_inicial": (rect_mao.x, rect_mao.y),
-                                                    "pos_final": (rect_slot.x, rect_slot.y),
-                                                    "pos_atual": [rect_mao.x, rect_mao.y],
-                                                    "progresso": 0.0,
-                                                    "slot_destino": i
-                                                })
-                                                
-                                                self.mao_jogador.pop(self.index_carta_selecionada)
-                                                self.estado_atual = "normal"
-                                                self.carta_selecionada = None
-                                                self.index_carta_selecionada = None
-                                            break
+
+                            self.carta_selecionada = None
+                            self.index_carta_selecionada = None
+
+                            self.mensagem_debug = (
+                                "Carta posicionada."
+                            )
+
+                        break
+
+            if not clicou_valido:
+
+                self.estado_atual = "normal"
+
+                self.carta_selecionada = None
+                self.index_carta_selecionada = None
+
+                self.slots_sacrificados_pendentes.clear()
+
+                self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
 
     def atualizar(self, dt):
-        if self.resultado is not None:
-            return
 
         for idx in range(4):
             if self.flash_aliado[idx] > 0: self.flash_aliado[idx] -= dt
@@ -348,7 +524,6 @@ class CenaCombate(CenaBase):
                 if self.idx_atacante_atual >= 4:
                     self.mensagem_debug = "Turno Aliado encerrado. Inimigo preparando jogadas..."
                     self.fase_resolucao = "pre_inimigo"
-                    self.tempo_espera_fase = 1000.0 
                     
                     for i in range(4):
                         if self.slots_inimigos[i] is None and len(self.filas_espera_inimigas[i]) > 0:
@@ -368,7 +543,6 @@ class CenaCombate(CenaBase):
                     else:
                         self.peso_balanca += card_atacante.dano
                         if self.peso_balanca >= 8:
-                            self.resultado = "vitoria"
                             self.mensagem_debug = "VITÓRIA! A balança tombou totalmente."
                             self.terminou = True
                             self.proxima_cena = "mapa" 
@@ -381,14 +555,6 @@ class CenaCombate(CenaBase):
                     self.dano_aplicado = False
 
             elif self.fase_resolucao == "pre_inimigo":
-                self.tempo_espera_fase -= dt
-                if self.tempo_espera_fase <= 0:
-                    acoes_do_turno = self.script_inimigo.get(self.turno_global, [])
-                    for comando in acoes_do_turno:
-                        if comando["acao"] == "ataque_especial":
-                            self.peso_balanca -= comando.get("dano_direto", 1)
-                            self.mensagem_debug = f"Chefe usou: {comando.get('nome')}!"
-                    
                     self.fase_resolucao = "inimigos"
                     self.idx_atacante_atual = 0
                     self.progresso_ataque = 0.0
@@ -407,7 +573,6 @@ class CenaCombate(CenaBase):
                 if self.idx_atacante_atual >= 4:
                     if self.peso_balanca <= -8:
                         self.vida_player -= 1
-                        self.resultado = "derrota"
                         self.mensagem_debug = "Você perdeu."
                         if self.vida_player <= 0:
                             self.mensagem_debug = "Você sucumbiu..."
@@ -425,9 +590,7 @@ class CenaCombate(CenaBase):
                     self.ja_comprou_neste_turno = False 
                     self.estado_atual = "fase_compra"
                     self.fase_resolucao = None
-                    if self.resultado != "derrota":
-                        self._carregar_intencoes_inimigas_do_turno(self.turno_global)
-                        self.mensagem_debug = "Seu Turno! Compre 1 carta para agir."
+                    
                     return
 
                 card_atacante = self.slots_inimigos[self.idx_atacante_atual]
@@ -532,25 +695,38 @@ class CenaCombate(CenaBase):
         txt_balanca = self.debug.render(f"{self.peso_balanca}", True, (255, 255, 255))
         self.tela.blit(txt_balanca, (centro_x - txt_balanca.get_width()//2, centro_y - 30))
 
-        pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
+        if hasattr(self, 'img_campainha') and self.img_campainha is not None:
+            self.tela.blit(self.img_campainha, self.campainha_rect)
+        else:
+            pygame.draw.rect(self.tela, (200, 50, 50), self.campainha_rect)
         
         piscar = self.estado_atual == "fase_compra" and (pygame.time.get_ticks() % 1000 < 500)
         cor_pernas_base = (200, 50, 50) if piscar else (255, 105, 97)
         cor_deck_base = (120, 150, 160) if piscar else (174, 198, 207)
 
-        def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado):
+        def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado, img_verso=None):
             for i in range(qtd_itens):
                 off_x, off_y, angulo = lista_bagunca[i % len(lista_bagunca)]
-                surf_carta = pygame.Surface((144, 176), pygame.SRCALPHA)
-                cor = (100, 100, 100) if bloqueado else cor_base
-                surf_carta.fill(cor)
+                
+                if img_verso is not None:
+                    surf_carta = img_verso.copy()
+                    if bloqueado:
+                        # Aplica uma película escura se não puder comprar
+                        surf_escura = pygame.Surface(surf_carta.get_size(), pygame.SRCALPHA)
+                        surf_escura.fill((0, 0, 0, 128))
+                        surf_carta.blit(surf_escura, (0, 0))
+                else:
+                    # Fallback clássico caso falte a imagem
+                    surf_carta = pygame.Surface((144, 176), pygame.SRCALPHA)
+                    cor = (100, 100, 100) if bloqueado else cor_base
+                    surf_carta.fill(cor)
                 
                 carta_rot = pygame.transform.rotate(surf_carta, angulo)
                 rect_final = carta_rot.get_rect(center=pos_rect.center)
                 rect_final.x += off_x
                 rect_final.y += (off_y - (i * 2)) 
                 self.tela.blit(carta_rot, rect_final)
-
+        
         if self.pernas_disponiveis > 0:
             desenhar_pilha(self.comprar_pernas_rect, self.pernas_disponiveis, self.bagunca_pernas, cor_pernas_base, self.ja_comprou_neste_turno)
         else:

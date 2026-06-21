@@ -10,6 +10,7 @@ from cenas.tutorial import CenaTutorial
 from cenas.mapa import CenaMapa
 from cenas.comprar_cartas import CenaEscolhaCarta
 from cenas.inventario import CenaInventario
+from cenas.mochila import CenaMochila
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -71,6 +72,8 @@ def main():
         Carta("Caboclo", 1, 1, img_caboclo, 1, 1)
     ]
 
+    itens_jogador_global = []
+
     rodando = True
     proxima = None
     while rodando:
@@ -100,6 +103,12 @@ def main():
                 deck_jogador_global.append(cena_atual.carta_escolhida)
                 print(f"Carta adicionada ao baralho: {cena_atual.carta_escolhida.nome}")
                 cena_atual.carta_escolhida = None
+
+            if hasattr(cena_atual, 'itens_adquiridos') and cena_atual.itens_adquiridos:
+                itens_jogador_global.extend(cena_atual.itens_adquiridos) 
+                for item in cena_atual.itens_adquiridos:
+                    print(f"Item adicionado na mochila: {item.nome}")
+                cena_atual.itens_adquiridos = []
 
             proxima = cena_atual.proxima_cena
             cena_atual.terminou = False
@@ -131,6 +140,12 @@ def main():
 
         if proxima == "comprar_cartas": 
             nova_cena = CenaEscolhaCarta(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        if proxima == "mochila": 
+            nova_cena = CenaMochila(tela)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
