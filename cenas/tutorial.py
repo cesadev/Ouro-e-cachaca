@@ -170,7 +170,7 @@ class CenaTutorial(CenaBase):
                             elif self.estado_atual == "fase_compra":
                                 self.adicionar_dialogos(["Compre uma carta pra continuar!"])
                             elif not self.ja_comprou_neste_turno and self.turno_global > 1:
-                                self.adicionar_dialogos(["Nesse jogo, tu tem que comprar uma carta antes de fazer qualquer coisa!"])
+                                self.adicionar_dialogos(["Nesse jogo, tu tem que comprar uma carta antes de tudo!"])
                             elif self.passo_tutorial == 3 or (self.passo_tutorial >= 6 and self.ja_comprou_neste_turno):
                                 self.turno_atual = "resolvendo_combate"
                                 self.fase_resolucao = "aliados"
