@@ -1,24 +1,24 @@
 import pygame
 import random
-from cenas.cena_base import CenaBase
-from cenas.batalha import Carta
+from cena_base import CenaBase
+from cartas import Carta
 
 class CenaEscolhaCarta(CenaBase):
-    def __init__(self, tela):
+    def __init__(self, tela, imagens_versos, imagens_cartas, imagens_ui):
         super().__init__(tela)
         
         self.tela = tela
         
         # imagem de fundo
         try:
-            img = pygame.image.load("assets/fundo_draft.png").convert()
+            img = pygame.image.load("cenarios/fundo_draft.png").convert()
             self.fundo = pygame.transform.scale(img, tela.get_size())
         except FileNotFoundError:
             self.fundo = pygame.Surface(tela.get_size())
             self.fundo.fill((30, 30, 40))
             
         # o verso da carta (jaja faço)
-        self.img_verso = self._carregar_img("carta_verso")
+        self.img_verso = imagens_versos.get("carta_verso")
             
         self.fonte_titulo = pygame.font.SysFont("Arial", 50, bold=True)
         self.fonte_cartas = pygame.font.SysFont("Arial", 20)
@@ -27,17 +27,20 @@ class CenaEscolhaCarta(CenaBase):
 
 
         todas_as_cartas = [
-            Carta("Curupira", 2, 2, self._carregar_img("curupira"), 2, 1),
-            Carta("Capelobo", 1, 3, self._carregar_img("Capelobo"), 1, 1),
-            Carta("Timbu", 1, 1, self._carregar_img("timbu"), 1, 1),
-            Carta("La Ursa", 3, 2, self._carregar_img("LaUrsa"), 3, 1),
-            Carta("Boitatá", 1, 1, self._carregar_img("boitata"), 1, 3),
-            Carta("Mula Sem-Cabeça", 3, 4, self._carregar_img("mula"), 3, 1),
-            Carta("Anhangá", 3, 7, self._carregar_img("anhanga"), 4, 1),
-            Carta("Caboclo D'água", 1, 1, self._carregar_img("caboclo"), 1, 1),
-            Carta("Comadre Florzinha", 1, 1, self._carregar_img("comadre"), 2, 1),
-            Carta("Cobra Coral", 2, 2, self._carregar_img("cobra_coral"), 1, 1),
-            Carta("Leão", 7, 7, self._carregar_img("leao"), 4, 1)
+            Carta("Acauã", 2, 3, imagens_cartas.get("acaua"), 2, 1, selos=["voador"]),
+            Carta("Anhangá", 3, 7, imagens_cartas.get("anhanga"), 4, 1),
+            Carta("Boitatá", 2, 1, imagens_cartas.get("boitata"), 2, 1),
+            Carta("Caboclo D'água", 1, 1, imagens_cartas.get("caboclo"), 1, 1, selos=["mergulhador"]),
+            Carta("Capelobo", 1, 2, imagens_cartas.get("capelobo"), 1, 1),
+            Carta("Chupa-Cabra", 1, 1, imagens_cartas.get("chupa-cabra"), 1, 3),
+            Carta("Cobra Coral", 2, 2, imagens_cartas.get("cobra_coral"), 1, 1, selos=["mortal"]),
+            Carta("Comadre Florzinha", 1, 1, imagens_cartas.get("comadre"), 2, 1, selos=["ataque_triplo"]),
+            Carta("Cuca", 2, 2, imagens_cartas.get("cuca"), 2, 1, selos=["escudo"]),
+            Carta("Curupira", 3, 2, imagens_cartas.get("curupira"), 2, 1),
+            Carta("La Ursa", 3, 2, imagens_cartas.get("la_ursa"), 3, 1),
+            Carta("Leão", 7, 7, imagens_cartas.get("leao"), 4, 1),
+            Carta("Mula Sem-Cabeça", 3, 4, imagens_cartas.get("mula"), 3, 1),
+            Carta("Timbu", 1, 1, imagens_cartas.get("timbu"), 1, 1, selos=["espinhos"])
         ]
         
         self.cartas_na_mesa = random.sample(todas_as_cartas, 3)

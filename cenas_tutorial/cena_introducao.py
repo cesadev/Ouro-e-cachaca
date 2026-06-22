@@ -1,5 +1,5 @@
 import pygame
-from cenas.cena_base import CenaBase
+from cena_base import CenaBase
 
 class CenaIntroducao(CenaBase):
     def __init__(self, tela):
