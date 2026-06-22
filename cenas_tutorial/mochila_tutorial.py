@@ -27,11 +27,11 @@ class CenaMochila(CenaBase):
             self.fundo = pygame.Surface(tela.get_size())
             self.fundo.fill((30, 30, 40))
             
-        self.fonte_dialogo = pygame.font.SysFont("Arial", 30)
+        self.fonte_dialogo = pygame.font.SysFont("Arial", 40)
 
         self.itens_sorteados = [
             Item("Garrafa com Perna Cabeluda", "assets/garrafa.png"),
-            Item("Abridor de Cerveja", "assets/cerveja.png")
+            Item("Abridor de Cerveja", "assets/abridor.png")
         ]
         self.itens_adquiridos = [] 
         
@@ -44,7 +44,7 @@ class CenaMochila(CenaBase):
         self.y_inicial = -200
         
         self.posicoes_finais = [
-            (largura // 2 + 50, altura // 2),
+            (largura // 2 + 25, altura // 2),
             (largura // 2 + 150, altura // 2)
         ]
         
@@ -137,7 +137,7 @@ class CenaMochila(CenaBase):
         # 1. Desenha os itens que já foram pro canto e estão "guardados"
         for i in range(self.index_item_atual):
             item = self.itens_sorteados[i]
-            img = pygame.transform.scale(item.img_original, (80, 80)) # Tamanho menor no canto
+            img = pygame.transform.scale(item.img_original, (176, 144)) # Tamanho menor no canto
             pos = self.posicoes_finais[i]
             rect = img.get_rect(center=pos)
             self.tela.blit(img, rect)
@@ -165,7 +165,7 @@ class CenaMochila(CenaBase):
             
             self.tela.blit(img_animada, rect_animado)
 
-        # 3. Caixa de diálogo (opcional, para guiar o jogador)
+        # Caixa de diálogo (opcional, para guiar o jogador)
         if self.dialogo_atual:
             largura, altura = self.tela.get_size()
             rect_caixa = pygame.Rect(100, altura - 180, largura - 200, 150)
