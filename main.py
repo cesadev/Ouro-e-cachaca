@@ -1,16 +1,20 @@
 import pygame
+from cena_base import CenaBase
+from menu import Menu
+from cartas import Carta
+from cenas_tutorial.cena_introducao import CenaIntroducao
+from cenas_tutorial.tutorial import CenaTutorial
+from cenas_tutorial.mapa_tutorial import CenaMapa
+from cenas_tutorial.combate_tutorial import CenaCombateTutorial
 
-from cenas.cena_introducao import CenaIntroducao
-from cenas.batalha import CenaCombate
-from cenas.cena_base import CenaBase
-from cenas.fases import fases_do_jogo
-from cenas.batalha import Carta
-from cenas.menu import Menu
-from cenas.tutorial import CenaTutorial
-from cenas.mapa import CenaMapa
-from cenas.comprar_cartas import CenaEscolhaCarta
-from cenas.inventario import CenaInventario
-from cenas.mochila import CenaMochila
+from cenas_caboclo.batalha import CenaCombate
+
+# from cenas.fases import fases_do_jogo
+
+
+from cenas_tutorial.comprar_cartas import CenaEscolhaCarta
+from cenas_tutorial.inventario import CenaInventario
+from cenas_tutorial.mochila_tutorial import CenaMochila
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -37,6 +41,50 @@ def main():
     LARGURA, ALTURA = 1536, 864
     tela = pygame.display.set_mode((LARGURA, ALTURA))
     pygame.display.set_caption("Ouro e Cachaça")
+
+    nomes_cartas = ["acaua", "anhanga", "boitata", "caboclo", "capelobo", 
+                    "chupa-cabra", "cobra_coral", "comadre", "cuca", 
+                    "curupira", "la_ursa", "leao", "mula", "timbu","perna",
+                    "cacto",] 
+    imagens_cartas = {}
+
+# mudança nome das cartas
+    for nome in nomes_cartas:
+        try:
+            img_original = pygame.image.load(f"cartas/{nome}.png").convert_alpha()
+            imagens_cartas[nome] = pygame.transform.scale(img_original, (144, 176))
+        except FileNotFoundError:
+            imagens_cartas[nome] = None
+
+    
+    nomes_versos = ["verso_carta", "verso_perna"] 
+    imagens_versos = {}
+    for nome in nomes_versos:
+        try:
+            img_original = pygame.image.load(f"verso/{nome}.png").convert_alpha()
+            imagens_versos[nome] = pygame.transform.scale(img_original, (144, 176))
+        except FileNotFoundError:
+            print(f"AVISO: Imagem de verso '{nome}' não encontrada!")
+            imagens_versos[nome] = None
+
+    # elementos de interface e cenário
+    imagens_ui = {}
+    
+    # Carregando Copos, Campainha e o Fundo de Combate
+    try:
+        imagens_ui["copo1"] = pygame.transform.scale(pygame.image.load("assets/copo1.png").convert_alpha(), (80, 96))
+        imagens_ui["copo2"] = pygame.transform.scale(pygame.image.load("assets/copo2.png").convert_alpha(), (80, 96))
+        imagens_ui["campainha"] = pygame.transform.scale(pygame.image.load("assets/campainha.png").convert_alpha(), (120, 120))
+        imagens_ui["combate"] = pygame.transform.scale(pygame.image.load("cenarios/combate.png").convert(), (LARGURA, ALTURA))
+    except FileNotFoundError as e:
+        print(f"AVISO de UI/Cenário: Arquivo de interface não encontrado! {e}")
+        # Definindo fallbacks vazios para o jogo não quebrar caso falte algum
+        imagens_ui.setdefault("copo1", None)
+        imagens_ui.setdefault("copo2", None)
+        imagens_ui.setdefault("campainha", None)
+        imagens_ui.setdefault("fundo_combate", None)
+
+    #  ---------------------------------------------- marcando aqui onde deixa de upar as imagens
     relogio = pygame.time.Clock()
 
     cena_atual = Menu(tela)
@@ -44,32 +92,13 @@ def main():
     vida_player_global = 2
     nivel_batalha_global = 1
     nodo_atual_global = 0
-    
-    try:
-        img_capelobo = pygame.image.load("assets/Capelobo.png").convert_alpha()
-    except FileNotFoundError:
-        img_capelobo = None
-        print("AVISO: Imagem do Capelobo não encontrada! Verifica o nome na pasta assets.")
-
-    try:
-        img_curupira = pygame.image.load("assets/curupira.png").convert_alpha()
-    except FileNotFoundError:
-        img_curupira = None
-        print("AVISO: Imagem do Curupira não encontrada! Verifica o nome na pasta assets.")
-
-    try:
-        img_caboclo = pygame.image.load("assets/caboclo.png").convert_alpha()
-    except FileNotFoundError:
-        img_caboclo = None
-        print("AVISO: Imagem do Caboclo não encontrada! Verifica o nome na pasta assets.")
 
     #cartas iniciais (globais)
     deck_jogador_global = [
-        Carta("Capelobo", 1, 3, img_capelobo, 1, 1),
-        Carta("Curupira", 2, 2, img_curupira, 2, 1),
-        Carta("Capelobo", 1, 3, img_capelobo, 1, 1),
-        Carta("Caboclo", 1, 1, img_caboclo, 1, 1),
-        Carta("Caboclo", 1, 1, img_caboclo, 1, 1)
+        Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
+        Carta("Curupira", 2, 2, imagens_cartas["curupira"], 2, 1),
+        Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
+        Carta("Caboclo", 1, 1, imagens_cartas["caboclo"], 1, 1, selos=["mergulhador"]),
     ]
 
     itens_jogador_global = []
@@ -121,7 +150,7 @@ def main():
         
         if proxima == "tutorial":
             print("Tutorial")
-            nova_cena = CenaTutorial(tela)
+            nova_cena = CenaTutorial(tela, imagens_versos, imagens_cartas, imagens_ui)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
@@ -139,7 +168,7 @@ def main():
             proxima = None
 
         if proxima == "comprar_cartas": 
-            nova_cena = CenaEscolhaCarta(tela)
+            nova_cena = CenaEscolhaCarta(tela, imagens_versos, imagens_cartas, imagens_ui)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
@@ -150,29 +179,11 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
-        if proxima == "combate":
-            # montagem dinamica do boss
-            nome_fase = f"boss_{nivel_batalha_global}"
-            
-            if nome_fase in fases_do_jogo:
-                dados_da_fase = fases_do_jogo[nome_fase]
-            
-            # tela de zerar o jogo, dps adiciono aqui embaixo a tela de zerar, por enquanto ele vai ficar no loop de, caso terminou as batalhas, vai pra fase1.
-            else:
-                dados_da_fase = fases_do_jogo["boss_1"] 
-
-            nova_cena = CenaCombate(tela, deck_jogador_global, dados_da_fase, vida_player_global)
-            efeito_transicao(tela, nova_cena)
-            cena_atual = nova_cena
-            proxima = None
+       
         
         if proxima == "game_over":
-            
-            # a tela de perder as duas vidas
-            # nova_cena = CenaGameOver(tela) 
-            # efeito_transicao(tela, nova_cena)
-            # cena_atual = nova_cena
             proxima = None
+            
         pygame.display.flip()
 
     pygame.quit()

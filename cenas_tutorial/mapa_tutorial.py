@@ -1,5 +1,5 @@
 import pygame
-from cenas.cena_base import CenaBase
+from cena_base import CenaBase
 
 class CenaMapa(CenaBase):
     def __init__(self, tela, nodo_atual=0):
@@ -8,7 +8,7 @@ class CenaMapa(CenaBase):
         self.nodo_atual = nodo_atual
 
         try:
-            img = pygame.image.load("assets/fundo_tutorial_mapa.png").convert_alpha()
+            img = pygame.image.load("cenarios/fundo_tutorial_mapa.png").convert_alpha()
             self.fundo = pygame.transform.scale(img, tela.get_size())
         except FileNotFoundError:
             self.fundo = pygame.Surface(tela.get_size())

@@ -1,5 +1,5 @@
 import pygame, sys
-from cenas.cena_base import CenaBase
+from cena_base import CenaBase
 
 #define a fonte
 def fonte(tamanho):

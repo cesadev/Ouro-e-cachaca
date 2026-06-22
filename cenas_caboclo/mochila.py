@@ -1,12 +1,12 @@
 import pygame
 import random
 import math
-from cenas.cena_base import CenaBase
+from cena_base import CenaBase
 
 class Item:
     def __init__(self, nome, caminho_asset):
         self.nome = nome
-        # Carregamos a imagem original para não perder qualidade ao dar scale
+        # carregamos a imagem original para não perder qualidade ao dar scale
         try:
             self.img_original = pygame.image.load(caminho_asset).convert_alpha()
         except FileNotFoundError:
@@ -21,7 +21,7 @@ class CenaMochila(CenaBase):
         
         # Imagem de fundo
         try:
-            img = pygame.image.load("assets/fundo_draft.png").convert()
+            img = pygame.image.load("cenarios/fundo_draft.png").convert()
             self.fundo = pygame.transform.scale(img, tela.get_size())
         except FileNotFoundError:
             self.fundo = pygame.Surface(tela.get_size())
@@ -35,8 +35,8 @@ class CenaMochila(CenaBase):
             Item("Cantil", "assets/cantil.png"),
             Item("Abridor de Cerveja", "assets/cerveja.png")
         ]
-        # Embaralha os 3 itens para virem em ordem aleatória
-        self.itens_sorteados = random.sample(todos_itens, 3)
+        # Embaralha os 2 itens para virem em ordem aleatória
+        self.itens_sorteados = random.sample(todos_itens, 2)
         self.itens_adquiridos = [] # O que vai ser passado pro jogador dps
         
         # Controle de fluxo da animação
@@ -48,12 +48,11 @@ class CenaMochila(CenaBase):
         self.pos_centro = (largura // 2, altura // 2)
         self.y_inicial = -200
         
-        # Posições finais para os 3 itens (lado a lado, um pouco pra direita)
+        # Posições finais para os 2 itens (lado a lado, um pouco pra direita)
         # Ajuste o X e o Y aqui conforme achar melhor no visual
         self.posicoes_finais = [
             (largura // 2 + 50, altura // 2),
-            (largura // 2 + 150, altura // 2),
-            (largura // 2 + 250, altura // 2)
+            (largura // 2 + 150, altura // 2)
         ]
         
         # Posição dinâmica do item atual sendo animado
@@ -72,7 +71,7 @@ class CenaMochila(CenaBase):
                     self.estado_animacao = "indo_pro_canto"
                     self.progresso_movimento = 0.0
                     
-                # Clicou depois que os 3 itens já foram pra mochila
+                # Clicou depois que os 2 itens já foram pra mochila
                 elif self.estado_animacao == "finalizado":
                     self.itens_adquiridos = self.itens_sorteados
                     self.terminou = True
@@ -81,7 +80,7 @@ class CenaMochila(CenaBase):
     def atualizar(self, dt):
         self.tempo_animacao += dt * 0.005 # Velocidade do pulsar
         
-        if self.index_item_atual < 3:
+        if self.index_item_atual < 2:
             if self.estado_animacao == "descendo":
                 self.progresso_movimento += dt * 0.002
                 if self.progresso_movimento >= 1.0:
@@ -102,7 +101,7 @@ class CenaMochila(CenaBase):
                     self.index_item_atual += 1
                     self.progresso_movimento = 0.0
                     
-                    if self.index_item_atual >= 3:
+                    if self.index_item_atual >= 2:
                         self.estado_animacao = "finalizado"
                     else:
                         self.estado_animacao = "descendo"
@@ -129,7 +128,7 @@ class CenaMochila(CenaBase):
             self.tela.blit(img, rect)
             
         # 2. Desenha o item atual sendo animado (se ainda houver)
-        if self.index_item_atual < 3:
+        if self.index_item_atual < 2:
             item_atual = self.itens_sorteados[self.index_item_atual]
             
             # Lógica para escalar a imagem

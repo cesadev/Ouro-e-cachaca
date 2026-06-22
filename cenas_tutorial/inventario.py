@@ -1,5 +1,5 @@
 import pygame
-from cenas.cena_base import CenaBase
+from cena_base import CenaBase
 
 class CenaInventario(CenaBase):
     def __init__(self, tela, deck_jogador, itens=None, partes_totem=None):
