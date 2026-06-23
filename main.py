@@ -6,6 +6,7 @@ from cenas_tutorial.cena_introducao import CenaIntroducao
 from cenas_tutorial.tutorial import CenaTutorial
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
+from cenas_tutorial.matinta_tutorial import CenaMatintaTutorial
 
 from cenas_caboclo.batalha import CenaCombate
 
@@ -179,7 +180,15 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
-       
+        if proxima == "selos":
+            nova_cena = CenaMatintaTutorial(
+                tela,
+                imagens_cartas,
+                deck_jogador_global
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
         
         if proxima == "game_over":
             proxima = None
