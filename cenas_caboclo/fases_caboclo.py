@@ -1,8 +1,9 @@
 fases_do_jogo = {
     "boss_1": {
         "nome": "o lenhador brabo",
+        "mensagem_inicio": "Sua primeira batalha! Posicione suas cartas para sobreviver.",
         "obstaculos_iniciais": [
-            {"slot": 2, "nome": "Tronco", "vida": 5, "dano": 0, "valor_sacrificio": 0}
+            {"slot": 2, "nome": "Cacto", "vida": 5, "dano": 0, "valor_sacrificio": 0}
         ],
         "script_inimigo": {
             1: [
