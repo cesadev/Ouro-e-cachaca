@@ -12,15 +12,22 @@ class Menu(CenaBase):
     self.proxima_cena = None
 
     meio_x = tela.get_width() // 2
-    y_botoes = tela.get_height() * 0.75
+    y_botoes = tela.get_height() * 0.82
     #botões do menu principal
 
-    tamanho_icone = (150, 150)
+    tamanho_icone = (120, 120)
+
+    def carregar_icone(nome_arquivo):
+      try:
+        return pygame.transform.scale(pygame.image.load(f"assets/{nome_arquivo}"), tamanho_icone)
+      except FileNotFoundError:
+        return None
+
     self.botoes = [
-            {"texto": "INICIAR JOGO", "pos": (meio_x - 420, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaoiniciar.png"), tamanho_icone)},
-            {"texto": "CONFIGURAÇÕES", "pos": (meio_x - 140, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaoconfig.png"), tamanho_icone)},
-            {"texto": "EXTRA", "pos": (meio_x + 140, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaoextras.png"), tamanho_icone)},
-            {"texto": "SAIR", "pos": (meio_x + 420, y_botoes), "icone": pygame.transform.scale(pygame.image.load("assets/botaosair.png"), tamanho_icone)},
+            {"texto": "INICIAR JOGO", "pos": (meio_x - 310, y_botoes), "icone": carregar_icone("botaojogar.png")},
+            {"texto": "CONFIGURAÇÕES", "pos": (meio_x - 110, y_botoes), "icone": carregar_icone("botaoconfig.png")},
+            {"texto": "EXTRA", "pos": (meio_x + 110, y_botoes), "icone": carregar_icone("botaocreditos.png")},
+            {"texto": "SAIR", "pos": (meio_x + 310, y_botoes), "icone": carregar_icone("botaosair.png")}
         ]
 
     for botao in self.botoes:
@@ -48,6 +55,9 @@ class Menu(CenaBase):
             elif botao["texto"] == "INICIAR JOGO":
               self.terminou = True
               self.proxima_cena = "introducao"
+            elif botao["texto"] == "CONFIGURAÇÕES":
+              self.terminou = True
+              self.proxima_cena = "opcoes"
             elif botao["texto"] == "EXTRA":
               self.terminou = True
               self.proxima_cena = "creditos"
@@ -65,14 +75,26 @@ class Menu(CenaBase):
 
     #desenha os ícones dos botões
     for botao in self.botoes:
-      iconeretangulo = botao["icone"].get_rect(center=botao["pos"])
-      hover = iconeretangulo.collidepoint(posicaomouse)
-      
-      #aumenta o ícone se o mouse estiver em cima
-      if hover:
-        icone = pygame.transform.scale(botao["icone"], (180, 180))
+      if botao["icone"] is not None:
+        iconeretangulo = botao["icone"].get_rect(center=botao["pos"])
+        hover = iconeretangulo.collidepoint(posicaomouse)
+
+        #aumenta o ícone se o mouse estiver em cima
+        if hover:
+          icone = pygame.transform.scale(botao["icone"], (150, 150))
+        else:
+          icone = botao["icone"]
+        iconeretangulo = icone.get_rect(center=botao["pos"])
+        self.tela.blit(icone, iconeretangulo)
+        botao["rect"] = iconeretangulo
+
+        if hover:
+          label = fonte(22).render(botao["texto"], True, (255, 255, 255))
+          label_rect = label.get_rect(midtop=(botao["pos"][0], iconeretangulo.bottom + 8))
+          self.tela.blit(label, label_rect)
       else:
-        icone = botao["icone"]
-      iconeretangulo = icone.get_rect(center=botao["pos"])
-      self.tela.blit(icone, iconeretangulo)
-      botao["rect"] = iconeretangulo
+        botao["rect"] = pygame.Rect(0, 0, tamanho_icone[0], tamanho_icone[1])
+        botao["rect"].center = botao["pos"]
+        texto = fonte(24).render(botao["texto"], True, (255, 255, 255))
+        texto_rect = texto.get_rect(center=botao["pos"])
+        self.tela.blit(texto, texto_rect)
