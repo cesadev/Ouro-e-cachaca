@@ -40,9 +40,10 @@ def efeito_transicao(tela, cena_nova):
 def main():
     pygame.init()
     
-    tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    info = pygame.display.Info()
+    LARGURA, ALTURA = info.current_w, info.current_h
+    tela = pygame.display.set_mode((LARGURA, ALTURA), pygame.NOFRAME)
     pygame.display.set_caption("Ouro e Cachaça")
-    LARGURA, ALTURA = tela.get_size()
 
     nomes_cartas = ["acaua", "anhanga", "boitata", "caboclo", "capelobo", 
                     "chupa-cabra", "cobra_coral", "comadre", "cuca", 
