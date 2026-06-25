@@ -6,6 +6,8 @@ from cenas_tutorial.cena_introducao import CenaIntroducao
 from cenas_tutorial.tutorial import CenaTutorial
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
+from cenas_tutorial.cena_opcoes import CenaOpcoes
+from cenas_tutorial.cena_pause import CenaPause
 
 from cenas_caboclo.batalha import CenaCombate
 
@@ -38,8 +40,9 @@ def efeito_transicao(tela, cena_nova):
 def main():
     pygame.init()
     
-    LARGURA, ALTURA = 1536, 864
-    tela = pygame.display.set_mode((LARGURA, ALTURA))
+    info = pygame.display.Info()
+    LARGURA, ALTURA = info.current_w, info.current_h
+    tela = pygame.display.set_mode((LARGURA, ALTURA), pygame.NOFRAME)
     pygame.display.set_caption("Ouro e Cachaça")
 
     nomes_cartas = ["acaua", "anhanga", "boitata", "caboclo", "capelobo", 
@@ -112,6 +115,10 @@ def main():
         for evento in eventos:
             if evento.type == pygame.QUIT:
                 rodando = False
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                if not isinstance(cena_atual, (Menu, CenaPause, CenaOpcoes)):
+                    cena_atual.terminou = True
+                    cena_atual.proxima_cena = CenaPause(tela, cena_atual)
 
         cena_atual.processar_eventos(eventos)
         cena_atual.atualizar(dt)
@@ -161,10 +168,26 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
+        if proxima == "opcoes":
+            nova_cena = CenaOpcoes(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        if proxima == "menu":
+            nova_cena = Menu(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
         if proxima == "inventario":
             nova_cena = CenaInventario(tela, deck_jogador_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
+            proxima = None
+
+        if isinstance(proxima, CenaBase):
+            cena_atual = proxima
             proxima = None
 
         if proxima == "comprar_cartas": 
