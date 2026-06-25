@@ -1,3 +1,4 @@
+import os
 import pygame
 from cena_base import CenaBase
 
@@ -7,7 +8,8 @@ class CenaInventario(CenaBase):
         self.tela = tela
         
         try:
-            img = pygame.image.load("assets/fundo_draft.png").convert()
+            path_fundo = os.path.join("cenarios", "4k_tela_de_opcoes.png")
+            img = pygame.image.load(path_fundo).convert()
             self.fundo = pygame.transform.scale(img, tela.get_size())
         except FileNotFoundError:
             self.fundo = pygame.Surface(tela.get_size())
@@ -64,21 +66,24 @@ class CenaInventario(CenaBase):
 
         #desenhar cartas
         txt_cartas = self.fonte_subtitulo.render("Suas Cartas", True, (218, 165, 32))
-        self.tela.blit(txt_cartas, (50, 100))
+        self.tela.blit(txt_cartas, (self.tela.get_width()//2 - txt_cartas.get_width()//2, 100))
 
-        inicio_x = 50
+        card_width = 144
+        card_height = 176
+        espaco_x = 160
+        colunas = min(8, len(self.cartas_agrupadas)) if self.cartas_agrupadas else 1
+        linhas = (len(self.cartas_agrupadas) + colunas - 1) // colunas
+        largura_total = colunas * card_width + (colunas - 1) * (espaco_x - card_width)
+        inicio_x = self.tela.get_width() // 2 - largura_total // 2
         inicio_y = 160
-        espaco_x = 160 #distancia do espaço entre as cartas
-        
+
         for i, item in enumerate(self.cartas_agrupadas):
             carta = item['carta']
             qtd = item['qtd']
             
-            x = inicio_x + (i % 8) * espaco_x
-            y = inicio_y + (i // 8) * 200
-            rect_base = pygame.Rect(x, y, 144, 176)
-
-            rect_base = pygame.Rect(x, y, 144, 176)
+            x = inicio_x + (i % colunas) * espaco_x
+            y = inicio_y + (i // colunas) * (card_height + 40)
+            rect_base = pygame.Rect(x, y, card_width, card_height)
 
             if carta.imagem:
                 img_redimensionada = pygame.transform.scale(carta.imagem, (rect_base.width, rect_base.height))
@@ -102,24 +107,34 @@ class CenaInventario(CenaBase):
                 txt_qtd = self.fonte_qtd.render(f"x{qtd}", True, (255, 255, 255))
                 self.tela.blit(txt_qtd, (centro_bolinha[0] - txt_qtd.get_width()//2, centro_bolinha[1] - txt_qtd.get_height()//2))
 
-        #desenhar os itens
+        # desenhar os itens e totens lado a lado
+        y_base = inicio_y + linhas * (card_height + 40) + 30
+        itens_textos = [self.fonte_cartas.render(f"- {nome}: x{qtd}", True, (255, 255, 255)) for nome, qtd in self.itens.items()]
+        totens_textos = [self.fonte_cartas.render(f"- {nome}: x{qtd}", True, (255, 255, 255)) for nome, qtd in self.partes_totem.items()]
+
         txt_itens = self.fonte_subtitulo.render("Itens na Mochila", True, (218, 165, 32))
-        self.tela.blit(txt_itens, (50, 600))
-        
-        y_item = 650
-        for nome, qtd in self.itens.items():
-            txt = self.fonte_cartas.render(f"- {nome}: x{qtd}", True, (255, 255, 255))
-            self.tela.blit(txt, (50, y_item))
+        txt_totens = self.fonte_subtitulo.render("Partes do Totem", True, (218, 165, 32))
+
+        largura_coluna_itens = max([txt.get_width() for txt in itens_textos] + [txt_itens.get_width()])
+        largura_coluna_totens = max([txt.get_width() for txt in totens_textos] + [txt_totens.get_width()])
+        espacamento = 120
+        largura_total = largura_coluna_itens + largura_coluna_totens + espacamento
+        inicio_x_coluna = self.tela.get_width() // 2 - largura_total // 2
+
+        itens_x = inicio_x_coluna
+        totens_x = inicio_x_coluna + largura_coluna_itens + espacamento
+
+        self.tela.blit(txt_itens, (itens_x + largura_coluna_itens // 2 - txt_itens.get_width() // 2, y_base))
+        self.tela.blit(txt_totens, (totens_x + largura_coluna_totens // 2 - txt_totens.get_width() // 2, y_base))
+
+        y_item = y_base + txt_itens.get_height() + 15
+        for txt in itens_textos:
+            self.tela.blit(txt, (itens_x + largura_coluna_itens // 2 - txt.get_width() // 2, y_item))
             y_item += 30
 
-        #desenhar totens
-        txt_totens = self.fonte_subtitulo.render("Partes do Totem", True, (218, 165, 32))
-        self.tela.blit(txt_totens, (400, 600))
-
-        y_totem = 650
-        for nome, qtd in self.partes_totem.items():
-            txt = self.fonte_cartas.render(f"- {nome}: x{qtd}", True, (255, 255, 255))
-            self.tela.blit(txt, (400, y_totem))
+        y_totem = y_base + txt_totens.get_height() + 15
+        for txt in totens_textos:
+            self.tela.blit(txt, (totens_x + largura_coluna_totens // 2 - txt.get_width() // 2, y_totem))
             y_totem += 30
 
         #botao de voltar

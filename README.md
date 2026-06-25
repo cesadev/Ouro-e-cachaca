@@ -60,6 +60,6 @@ O jogo usa copos de shot como vida (você tem 2) e tampinhas de cerveja na balan
 - Bruno: Menu principal
 - Maria Luiza: Arte (xilogravura) e Matinta Pereira
 - Caio Cesar: Programação do combate
-- Vicente: Mapa, lore e som
+- Vicente: Mapa e lore
 - João Lucas: Documentação
-- Matheus: Design de cartas e efeitos visuais
+- Matheus: Design de cartas, efeitos visuais, som, creditos e bosses 
