@@ -71,6 +71,7 @@ class CenaCombate(CenaBase):
         self.slots_aliados = [None, None, None, None]
         self.slots_inimigos = [None, None, None, None]
         self.filas_espera_inimigas = [[], [], [], []]
+        self._tocar_musica_da_cena("Musicas/Cabloco.mp3")
         
         for obstaculo in dados_da_fase.get("obstaculos_iniciais", []):
             nome_obs = obstaculo["nome"]
@@ -128,6 +129,14 @@ class CenaCombate(CenaBase):
             return pygame.transform.scale(img, scale)
         except FileNotFoundError:
             return None
+
+    def _tocar_musica_da_cena(self, caminho):
+        try:
+            pygame.mixer.music.load(caminho)
+            pygame.mixer.music.set_volume(0.6)
+            pygame.mixer.music.play(-1)
+        except pygame.error as e:
+            print(f"AVISO de áudio: não foi possível carregar {caminho}: {e}")
         
     def _carregar_intencoes_inimigas_do_turno(self, turno):
         """Varre o script do turno e adiciona spawns de objetos Carta na fila correspondente"""
