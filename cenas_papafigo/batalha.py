@@ -71,7 +71,7 @@ class CenaCombate(CenaBase):
         self.slots_aliados = [None, None, None, None]
         self.slots_inimigos = [None, None, None, None]
         self.filas_espera_inimigas = [[], [], [], []]
-        self._tocar_musica_da_cena("Musicas/Cabloco.mp3")
+        self._tocar_musica_da_cena("Musicas/Papafigo.mp3")
         
         for obstaculo in dados_da_fase.get("obstaculos_iniciais", []):
             nome_obs = obstaculo["nome"]
