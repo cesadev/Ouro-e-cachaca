@@ -75,7 +75,6 @@ def main():
             img_original = pygame.image.load(f"verso/{nome}.png").convert_alpha()
             imagens_versos[nome] = pygame.transform.scale(img_original, (144, 176))
         except FileNotFoundError:
-            print(f"AVISO: Imagem de verso '{nome}' não encontrada!")
             imagens_versos[nome] = None
 
     # elementos de interface e cenário
@@ -173,24 +172,28 @@ def main():
             proxima = None
 
         if proxima == "introducao":
-                nova_cena = CenaIntroducao(tela)
-                cena_atual = nova_cena
-                efeito_transicao(tela, nova_cena)
-                proxima = None
-        
+            nova_cena = CenaIntroducao(tela)
+            cena_atual = nova_cena
+            efeito_transicao(tela, nova_cena)
+            proxima = None
+    
+        if proxima == "cena_pergunta":
+            cena_atual = CenaPerguntaTutorial(tela)
+            cena_atual = nova_cena
+            efeito_transicao(tela, nova_cena)
+            proxima = None
+
         if proxima == "tutorial":
-            print("Tutorial")
             nova_cena = CenaTutorial(tela, imagens_versos, imagens_cartas, imagens_ui)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
-        
         if proxima == "mapa":
             nova_cena = CenaMapa(tela, nodo_atual_global) 
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
-
+        
         if proxima == "inventario":
             nova_cena = CenaInventario(tela, deck_jogador_global)
             efeito_transicao(tela, nova_cena)
