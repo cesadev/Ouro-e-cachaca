@@ -47,6 +47,7 @@ O jogo usa copos de shot como vida (você tem 2) e tampinhas de cerveja na balan
 - Peixeira: Corta a carta inimiga
 - Cantil: +1 de vida
 - Abridor de cerveja: Abre uma tampinha
+- Garrafa com carta: Uma Perna Cabeluda extra
 
 ## Tecnicamente
 
