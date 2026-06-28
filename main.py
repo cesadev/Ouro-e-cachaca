@@ -8,8 +8,7 @@ from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
 from cenas_tutorial.matinta import CenaMatinta
 from cenas_tutorial.batalha import CenaCombate
-
-# from cenas.fases import fases_do_jogo
+from cenas_tutorial.fases_tutorial import fases_do_tutorial
 
 
 from cenas_tutorial.comprar_cartas import CenaEscolhaCarta
@@ -188,6 +187,7 @@ def main():
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
+
         if proxima == "mapa":
             nova_cena = CenaMapa(tela, nodo_atual_global) 
             efeito_transicao(tela, nova_cena)
@@ -214,6 +214,13 @@ def main():
 
         if proxima == "selos":
             nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        if proxima == "combate1":
+            dados_fase = fases_do_tutorial.get("combate1") 
+            nova_cena = CenaCombate(tela,deck_jogador_global, dados_fase, vida_player_global,imagens_versos,imagens_cartas)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

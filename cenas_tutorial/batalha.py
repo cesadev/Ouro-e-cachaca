@@ -10,6 +10,10 @@ class CenaCombate(CenaBase):
         self.imagens_cartas = imagens_cartas
         tamanho_copo = (80, 96) 
 
+        self.nome_boss = dados_da_fase.get("nome", "Inimigo Desconhecido")
+        self.script_inimigo = dados_da_fase.get("script_inimigo", {})
+        self.obstaculos = dados_da_fase.get("obstaculos_iniciais", [])
+
         try:
             self.img_copo1 = pygame.transform.scale(pygame.image.load("assets/copo1.png").convert_alpha(), tamanho_copo)
             self.img_copo2 = pygame.transform.scale(pygame.image.load("assets/copo2.png").convert_alpha(), tamanho_copo)
@@ -93,7 +97,7 @@ class CenaCombate(CenaBase):
         
         largura_tela, altura_tela = tela.get_size()
         try:
-            imagem_original = pygame.image.load("assets/combate.png").convert()
+            imagem_original = pygame.image.load("cenarios/combate.png").convert()
             self.imagem_fundo = pygame.transform.scale(imagem_original, (largura_tela, altura_tela))
         except FileNotFoundError:
             self.imagem_fundo = pygame.Surface((largura_tela, altura_tela))
@@ -124,7 +128,7 @@ class CenaCombate(CenaBase):
 
     def _carregar_img(self, nome, scale=(144, 176), convert=False):
         try:
-            img = pygame.image.load(f"assets/{nome}.png")
+            img = pygame.image.load(f"cartas/{nome}.png")
             img = img.convert() if convert else img.convert_alpha()
             return pygame.transform.scale(img, scale)
         except FileNotFoundError:
@@ -899,46 +903,6 @@ if __name__ == "__main__":
     pygame.display.set_caption("Inscryption Engine - Sistema de Antecipação de Turnos")
     relogio = pygame.time.Clock()
 
-    # leitura do fases
-    try:
-        from cenas_caboclo.fases_caboclo import fases_do_jogo
-        mock_dados_fase = fases_do_jogo["boss_1"]
-    except ModuleNotFoundError:
-        print("fases.py não encontrado. Rodando em modo de segurança com dados locais.")
-        mock_dados_fase = {
-            "nome": "o lenhador brabo (Failsafe)",
-            "obstaculos_iniciais": [{"slot": 2, "nome": "Cacto", "vida": 5, "dano": 0, "valor_sacrificio": 0}],
-            "script_inimigo": {
-                1: [{"acao": "jogar_carta", "carta": {"nome": "Capelobo", "vida": 3, "dano": 1}, "slot": 0}],
-                2: [{"acao": "jogar_carta", "carta": {"nome": "timbu", "vida": 1, "dano": 1}, "slot": 3}],
-                4: [{"acao": "ataque_especial", "nome": "Puxão master das trevas", "dano_direto": 1}]
-            }
-        }
-
-    # cartas do baralho
-    tamanho_carta = (144, 176)
-    try:
-        img_capelobo = pygame.transform.scale(pygame.image.load("assets/Capelobo.png").convert_alpha(), tamanho_carta)
-    except FileNotFoundError:
-        img_capelobo = None
-        
-    try:
-        img_la_ursa = pygame.transform.scale(pygame.image.load("assets/LaUrsa.png").convert_alpha(), tamanho_carta)
-    except FileNotFoundError:
-        img_la_ursa = None
-
-    try:
-        img_comadre = pygame.transform.scale(pygame.image.load("assets/comadre.png").convert_alpha(), tamanho_carta)
-    except:
-        img_comadre = None
-
-    mock_deck_jogador = [
-        Carta(nome="Capelobo", poder=1, vida=3, imagem=img_capelobo, custo_sangue=1, valor_sacrificio=1),
-        Carta(nome="La Ursa", poder=4, vida=6, imagem=img_la_ursa, custo_sangue=3, valor_sacrificio=1),
-        Carta(nome="Comadre", poder=1, vida=1, imagem= img_comadre, custo_sangue=2, valor_sacrificio=1)
-    ]
-    
-    cena_teste = CenaCombate(tela_teste, mock_deck_jogador, mock_dados_fase)
     
     rodando = True
     while rodando:

@@ -24,9 +24,9 @@ class CenaCreditos(CenaBase):
         self.creditos = [
             "Desenvolvimento: Seu Nome Aqui",
             "Programação: Seu Nome Aqui",
-            "Arte e Design: Seu Nome Aqui",
+            "Arte e Design: Maru",
             "Música e Efeitos: Seu Nome Aqui",
-            "Agradecimentos: Jogadores, amigos e família",
+            "Agradecimentos: Neymar",
         ]
 
         largura, altura = tela.get_size()

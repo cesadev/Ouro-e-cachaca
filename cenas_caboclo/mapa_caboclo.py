@@ -8,23 +8,31 @@ class CenaMapa(CenaBase):
         self.nodo_atual = nodo_atual
 
         try:
-            img = pygame.image.load("cenarios/fundo_tutorial_mapa.png").convert_alpha()
+            img = pygame.image.load("cenarios/mapa_caboclo.png").convert_alpha()
             self.fundo = pygame.transform.scale(img, tela.get_size())
         except FileNotFoundError:
             self.fundo = pygame.Surface(tela.get_size())
             self.fundo.fill((50, 50, 50))
 
         self.nos_clicaveis = [
-        {"id": 0, "rect": pygame.Rect(65, 400, 80, 80), "destino": "combate", "proximos": [1]},
-        {"id": 1, "rect": pygame.Rect(250, 470, 80, 80), "destino": "comprar_cartas", "proximos": [2]},
-        {"id": 2, "rect": pygame.Rect(390, 310, 80, 80), "destino": "mochila", "proximos": [3]},
-        {"id": 3, "rect": pygame.Rect(535, 510, 80, 80), "destino": "combate1", "proximos": [4]},
-        {"id": 4, "rect": pygame.Rect(665, 355, 80, 80), "destino": "comprar_cartas", "proximos": [5]},
-        {"id": 5, "rect": pygame.Rect(740, 510, 80, 80), "destino": "selos", "proximos": [6]},
-        {"id": 6, "rect": pygame.Rect(895, 395, 80, 80), "destino": "combate2", "proximos": [7,8]},
-        {"id": 7, "rect": pygame.Rect(1040, 260, 80, 80), "destino": "selos", "proximos": [9]},
-        {"id": 8, "rect": pygame.Rect(1040, 530, 80, 80), "destino": "fogueira", "proximos": [9]},
-        {"id": 9, "rect": pygame.Rect(1190, 400, 80, 80), "destino": "combate3", "proximos": []}]
+            {"id": 0, "rect": pygame.Rect(86, 458, 80, 80), "destino": "combate", "proximos": [1]},
+            {"id": 1, "rect": pygame.Rect(239, 458, 80, 80), "destino": "comprar_cartas", "proximos": [2,3]},
+            {"id": 2, "rect": pygame.Rect(252, 176, 80, 80), "destino": "mochila", "proximos": [4]},
+            {"id": 3, "rect": pygame.Rect(249, 609, 80, 80), "destino": "fogueira", "proximos": [5]},
+            {"id": 4, "rect": pygame.Rect(434, 167, 80, 80), "destino": "combate", "proximos": [8]},
+            {"id": 5, "rect": pygame.Rect(435, 600, 80, 80), "destino": "combate", "proximos": [6,7]},
+            {"id": 6, "rect": pygame.Rect(578, 457, 80, 80), "destino": "selos", "proximos": [9]},
+            {"id": 7, "rect": pygame.Rect(559, 725, 80, 80), "destino": "mochila", "proximos": [10]},
+            {"id": 8, "rect": pygame.Rect(689, 174, 80, 80), "destino": "comprar_cartas", "proximos": [11]},
+            {"id": 9, "rect": pygame.Rect(784, 464, 80, 80), "destino": "comprar_cartas", "proximos": [12]},
+            {"id": 10, "rect": pygame.Rect(795, 722, 80, 80), "destino": "fogueira", "proximos": [12]},
+            {"id": 11, "rect": pygame.Rect(893, 175, 80, 80), "destino": "fogueira", "proximos": [12]},
+            {"id": 12, "rect": pygame.Rect(922, 462, 80, 80), "destino": "combate", "proximos": [13, 14]},
+            {"id": 13, "rect": pygame.Rect(1002, 315, 80, 80), "destino": "comprar_cartas", "proximos": [15]},
+            {"id": 14, "rect": pygame.Rect(1010, 570, 80, 80), "destino": "fogueira", "proximos": [16]},
+            {"id": 15, "rect": pygame.Rect(1156, 305, 80, 80), "destino": "fogueira", "proximos": [17]},
+            {"id": 16, "rect": pygame.Rect(1170, 582, 80, 80), "destino": "selos", "proximos": [17]},
+            {"id": 17, "rect": pygame.Rect(1320, 453, 80, 80), "destino": "caboclo", "proximos": []}]
         
         largura_tela = tela.get_width()
         self.rect_inventario = pygame.Rect(largura_tela - 220, 30, 180, 50)
