@@ -6,7 +6,7 @@ from cenas_tutorial.cena_introducao import CenaIntroducao
 from cenas_tutorial.tutorial import CenaTutorial
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
-
+from cenas_tutorial.matinta import CenaMatinta
 from cenas_caboclo.batalha import CenaCombate
 
 # from cenas.fases import fases_do_jogo
@@ -106,7 +106,7 @@ def main():
     #cartas iniciais (globais)
     deck_jogador_global = [
         Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
-        Carta("Curupira", 2, 2, imagens_cartas["curupira"], 2, 1),
+        Carta("Curupira", 3, 2, imagens_cartas["curupira"], 2, 1),
         Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
         Carta("Caboclo", 1, 1, imagens_cartas["caboclo"], 1, 1, selos=["mergulhador"]),
     ]
@@ -208,6 +208,12 @@ def main():
 
         if proxima == "mochila": 
             nova_cena = CenaMochila(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        if proxima == "selos":
+            nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

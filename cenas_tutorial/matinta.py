@@ -1,11 +1,21 @@
 import pygame
 from cena_base import CenaBase
 
-class CenaMatintaTutorial(CenaBase):
-    def __init__(self, tela, imagens_cartas, deck_jogador):
+DICIONARIO_SELOS = {
+    "mergulhador": "mergulhador.png",
+    "ataque_triplo": "ataque_triplo.png",
+    "mortal": "mortal.png",
+    "voar": "voar.png",
+    "espinhos": "espinhos.png",
+    "escudo": "escudo.png",
+    "sangue": "sangue.png"
+}
+
+class CenaMatinta(CenaBase):
+    def __init__(self, tela, imagens_cartas, deck_jogador_global):
         super().__init__(tela)
         self.tela = tela
-        self.deck = deck_jogador
+        self.deck = deck_jogador_global
         
         try:
             img = pygame.image.load("cenarios/fundo_draft.png").convert()
@@ -191,3 +201,14 @@ class CenaMatintaTutorial(CenaBase):
                 (rect_caixa.right - 30, rect_caixa.bottom - 20)
             ]
             pygame.draw.polygon(self.tela, (255, 255, 255), triangulo)
+
+    def transferir_selos(carta_sacrificada, carta_alvo):
+        for nome_selo in carta_sacrificada.selos:
+            
+            # Verifica se o selo existe no nosso dicionário de imagens
+            if nome_selo in DICIONARIO_SELOS:
+                nome_arquivo_imagem = DICIONARIO_SELOS[nome_selo]
+                
+                # Chama a função que criamos no cartas.py para carimbar a carta alvo!
+                carta_alvo.adicionar_novo_selo(nome_selo, nome_arquivo_imagem)
+                print(f"Selo {nome_selo} transferido com sucesso!")
