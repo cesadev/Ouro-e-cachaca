@@ -35,18 +35,10 @@ class Carta:
                 pos_selo_x = 8
                 pos_selo_y = 25
                 
-                # O PULO DO GATO SUPREMO:
-                # Ele multiplica o recuo pela quantidade de selos que a carta já tem!
-                # 0 selos = pos_x fica 8
-                # 1 selo  = pos_x vai para 43 (8 + 35)
-                # 2 selos = pos_x vai para 78 (8 + 70)
-                # Assim, todos os selos ficam perfeitamente lado a lado!
                 pos_selo_x += 35 * len(self.selos)
-                
-                # Funde (Blit) o selo na imagem da carta!
+                # FUNDIR O SELO NA CARTA
                 self.imagem.blit(img_selo, (pos_selo_x, pos_selo_y))
             
-            # Adiciona na lista para o jogo saber que agora a carta tem esse poder
             self.selos.append(nome_selo_logica)
             
         except FileNotFoundError:
@@ -63,8 +55,6 @@ class Carta:
         
     def copy(self):
         """Retorna uma cópia real da instância da carta"""
-        # Como o método adicionar_novo_selo já altera a imagem (self.imagem) 
-        # e a lista de selos (self.selos), a cópia vai herdar as tatuagens naturalmente!
         return Carta(
             self.nome, self.poder, self.vida, self.imagem, 
             self.custo_sangue, self.valor_sacrificio, self.selos

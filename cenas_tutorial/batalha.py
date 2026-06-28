@@ -162,6 +162,36 @@ class CenaCombate(CenaBase):
                     carta_obj = c.copy()
                 self.filas_espera_inimigas[slot].append(carta_obj)
 
+    def processar_ataque(self, carta_atacante, carta_alvo):
+        # SELOOOOSS
+        if "escudo" in carta_alvo.selos:
+            print("Escudo absorveu o dano!")
+            carta_alvo.selos.remove("escudo") 
+            return 
+
+        dano = carta_atacante.dano
+        
+        if "ataque_triplo" in carta_atacante.selos:
+            self.aplicar_dano_triplo(carta_atacante)
+            
+        if "mortal" in carta_atacante.selos:
+            dano = 999 
+
+        if "mergulhador" in carta_atacante.selos:
+            print("Mergulhador ignorou a defesa e atacou a balança!")
+            self.balanca.aplicar_dano(dano)
+            return 
+            
+        if "voar" in carta_atacante.selos:
+            self.balanca.aplicar_dano(dano)
+            return
+
+        carta_alvo.vida -= dano
+
+        if "espinhos" in carta_alvo.selos:
+            carta_atacante.vida -= 1
+            print("Espinhos deram dano de volta!")
+            
     def processar_eventos(self, eventos):
         for event in eventos:
             if event.type != pygame.MOUSEBUTTONDOWN:
@@ -186,9 +216,7 @@ class CenaCombate(CenaBase):
             if self.turno_atual != "jogador":
                 continue
 
-            # ==========================
             # COMPRA DE CARTAS
-            # ==========================
 
             if self.comprar_pernas_rect.collidepoint(pos_mouse):
 
@@ -232,10 +260,7 @@ class CenaCombate(CenaBase):
 
                 continue
 
-            # ==========================
             # CAMPAINHA
-            # ==========================
-
             if self.campainha_rect.collidepoint(pos_mouse):
 
                 if self.estado_atual == "fase_compra":
@@ -258,17 +283,10 @@ class CenaCombate(CenaBase):
 
                 continue
 
-            # ==========================
-            # BLOQUEIO DA FASE DE COMPRA
-            # ==========================
 
             if self.estado_atual == "fase_compra":
                 self.mensagem_debug = "Compre uma carta primeiro."
                 continue
-
-            # ==========================
-            # ESTADO NORMAL
-            # ==========================
 
             if self.estado_atual == "normal":
 
@@ -326,9 +344,6 @@ class CenaCombate(CenaBase):
                         "Escolha um slot."
                     )
 
-            # ==========================
-            # SACRIFÍCIO
-            # ==========================
 
             elif self.estado_atual == "sacrificio":
 
@@ -372,10 +387,6 @@ class CenaCombate(CenaBase):
                     self.slots_sacrificados_pendentes.clear()
 
                     self.fade_sacrificio = [0.0, 0.0, 0.0, 0.0]
-
-            # ==========================
-            # POSICIONAMENTO
-            # ==========================
 
             elif self.estado_atual == "posicionamento":
 

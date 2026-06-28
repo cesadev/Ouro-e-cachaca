@@ -7,7 +7,7 @@ from cenas_tutorial.tutorial import CenaTutorial
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
 from cenas_tutorial.matinta import CenaMatinta
-from cenas_caboclo.batalha import CenaCombate
+from cenas_tutorial.batalha import CenaCombate
 
 # from cenas.fases import fases_do_jogo
 
