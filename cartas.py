@@ -9,7 +9,6 @@ class Carta:
         self.custo_sangue = custo_sangue
         self.valor_sacrificio = valor_sacrificio
 
-        # Lista de selos que a carta tem (seja de fábrica ou adicionado depois)
         self.selos = selos.copy() if selos is not None else []
         
         self.imagem = imagem
@@ -19,18 +18,15 @@ class Carta:
         else:
             self.rect = pygame.Rect(0, 0, 144, 176)
 
-    # ==========================================
-    # NOVO MÉTODO GENÉRICO PARA QUALQUER SELO
-    # ==========================================
     def adicionar_novo_selo(self, nome_selo_logica, nome_arquivo_imagem):
         """
         Carimba QUALQUER selo novo diretamente na arte da carta e adiciona ele na lógica.
         """
         try:
-            # Puxa o selo dinamicamente baseado no nome do arquivo que você mandar
+            # Puxa o selo baseado no nome do arquivo
             caminho = f"selos/{nome_arquivo_imagem}"
             img_temp = pygame.image.load(caminho).convert_alpha()
-            img_selo = pygame.transform.scale(img_temp, (30, 30))
+            img_selo = pygame.transform.scale(img_temp, (45, 45))
             
             if self.imagem is not None:
                 # Copia a imagem só para essa carta

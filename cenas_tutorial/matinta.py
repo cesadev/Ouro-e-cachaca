@@ -59,6 +59,8 @@ class CenaMatinta(CenaBase):
         self.hitboxes_mao = []
         self._organizar_deck()
 
+        
+
     def _organizar_deck(self):
         self.hitboxes_mao.clear()
         largura, altura = self.tela.get_size()
@@ -116,19 +118,17 @@ class CenaMatinta(CenaBase):
                         
                         self.carta_beneficiada = self.deck.pop(idx)
                         self._organizar_deck()
-                        
-                        #logica transferencia de selos
-                        #adiciona os selos da sacrificada na beneficiada
                         for selo in self.carta_sacrificada.selos:
-                            if selo not in self.carta_beneficiada.selos:
-                                self.carta_beneficiada.selos.append(selo)
+                            nome_img = DICIONARIO_SELOS.get(selo)
+                            
+                            if nome_img:
+                                self.carta_beneficiada.adicionar_novo_selo(selo, nome_img)
                         
-                        #devolve a beneficiada pro deck 100% atualizada
                         self.deck.append(self.carta_beneficiada)
-                        self.carta_beneficiada.selo_matinta = True
                         
                         self.estado = "dialogo_final"
                         self.dialogo_atual = "Matinta - Hehehe... um bom trato. A nova fera está pronta."
+
 
                 elif self.estado == "dialogo_final":
                     self.terminou = True
