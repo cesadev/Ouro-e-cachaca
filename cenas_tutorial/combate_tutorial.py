@@ -164,7 +164,7 @@ class CenaCombateTutorial(CenaBase):
 
             if event.button == 1 and self.rect_pular_batalha.collidepoint(pos_mouse):
                 self.terminou = True
-                self.proxima_cena = "mapa_caboclo"
+                self.proxima_cena = "mapa"
                 self.mensagem_debug = "Batalha pulada."
                 return
 

@@ -4,10 +4,11 @@ from cena_base import CenaBase
 from cartas import Carta
 
 class CenaEscolhaCarta(CenaBase):
-    def __init__(self, tela, imagens_versos, imagens_cartas, imagens_ui):
+    def __init__(self, tela, imagens_versos, imagens_cartas, imagens_ui, proxima_depois="mapa"):
         super().__init__(tela)
         
         self.tela = tela
+        self.proxima_depois = proxima_depois
         
         # imagem de fundo
         try:
@@ -95,7 +96,7 @@ class CenaEscolhaCarta(CenaBase):
                         
                 elif self.estado == "dialogo_final":
                     self.terminou = True
-                    self.proxima_cena = "mapa"
+                    self.proxima_cena = self.proxima_depois
 
         if self.estado == "escolha":
             pos_mouse = pygame.mouse.get_pos()

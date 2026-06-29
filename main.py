@@ -5,6 +5,7 @@ from cartas import Carta
 from cenas_tutorial.cena_introducao import CenaIntroducao
 from cenas_tutorial.tutorial import CenaTutorial
 from cenas_tutorial.mapa_tutorial import CenaMapa
+from cenas_caboclo.mapa_caboclo import CenaMapa as CenaMapaCaboclo
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
 from cenas_tutorial.matinta import CenaMatinta
 from batalha import CenaCombate
@@ -102,7 +103,9 @@ def main():
     # --- Estado global ---
     vida_player_global = 2
     nivel_batalha_global = 1
-    nodo_atual_global = 0
+    nodo_atual_tutorial_global = 0
+    nodo_atual_caboclo_global = 0
+    mapa_atual = "tutorial"
 
     deck_jogador_global = [
         Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
@@ -152,9 +155,13 @@ def main():
                 if getattr(cena_atual, 'resultado', None) == "vitoria":
                     nivel_batalha_global += 1
 
-            # Salva posição do mapa
+            # Salva posição do mapa de tutorial ou do Caboclo
             if isinstance(cena_atual, CenaMapa) and hasattr(cena_atual, 'nodo_atual'):
-                nodo_atual_global = cena_atual.nodo_atual
+                nodo_atual_tutorial_global = cena_atual.nodo_atual
+                mapa_atual = "tutorial"
+            elif isinstance(cena_atual, CenaMapaCaboclo) and hasattr(cena_atual, 'nodo_atual'):
+                nodo_atual_caboclo_global = cena_atual.nodo_atual
+                mapa_atual = "caboclo"
 
             # Adiciona carta escolhida ao deck
             if hasattr(cena_atual, 'carta_escolhida') and cena_atual.carta_escolhida is not None:
@@ -190,7 +197,17 @@ def main():
             proxima = None
 
         elif proxima == "mapa":
-            nova_cena = CenaMapa(tela, nodo_atual_global)
+            if mapa_atual == "caboclo":
+                nova_cena = CenaMapaCaboclo(tela, nodo_atual_caboclo_global)
+            else:
+                nova_cena = CenaMapa(tela, nodo_atual_tutorial_global)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        elif proxima == "mapa_caboclo":
+            mapa_atual = "caboclo"
+            nova_cena = CenaMapaCaboclo(tela, nodo_atual_caboclo_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
@@ -207,6 +224,15 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
+        elif proxima == "comprar_cartas_caboclo":
+            nova_cena = CenaEscolhaCarta(
+                tela, imagens_versos, imagens_cartas, imagens_ui,
+                proxima_depois="mapa_caboclo"
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
         elif proxima == "mochila":
             nova_cena = CenaMochila(tela)
             efeito_transicao(tela, nova_cena)
@@ -214,7 +240,8 @@ def main():
             proxima = None
 
         elif proxima == "selos":
-            nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global)
+            destino_volta = "mapa_caboclo" if mapa_atual == "caboclo" else "mapa"
+            nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global, destino_volta)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
