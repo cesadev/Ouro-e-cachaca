@@ -6,9 +6,13 @@ from cartas import Carta
 from itens import lista_itens
 
 class CenaCombate(CenaBase):
-    def __init__(self, tela, deck_jogador, dados_da_fase, itens_jogador_global, vida_player, imagens_versos, imagens_cartas):
+    def __init__(self, tela, deck_jogador, dados_da_fase, itens_jogador_global, vida_player, imagens_versos, imagens_cartas, imagens_ui):
         super().__init__(tela) 
-        self.imagens_cartas = imagens_cartas
+        self.imagens_cartas = imagens_cartas 
+        self.imagens_versos = imagens_versos
+    
+        self.img_campainha = self.imagens_ui.get("campainha")
+    
         tamanho_copo = (80, 96) 
         self.aguardando_alvo_peixeira = False
         self.nome_boss = dados_da_fase.get("nome", "Inimigo Desconhecido")
@@ -730,16 +734,17 @@ class CenaCombate(CenaBase):
             rect_item = pygame.Rect(1190 + (i * 140), 330, 100, 100) # Ajuste o X e Y conforme necessário
             
             pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
-            
-            dados = lista_itens.get(nome_item)
-            if dados:
-                try:
 
-                    img = pygame.image.load(f"cartas/{dados['imagem']}").convert_alpha()
-                    img = pygame.transform.scale(img, (80, 80))
-                    self.tela.blit(img, (rect_item.x + 10, rect_item.y + 10))
-                except:
-                    pass 
+            nome = item.get("nome_item")
+            # Procura a imagem no dicionário (já carregado na main)
+            img_item = self.imagens_ui.get(nome)
+            
+            img_item = lista_itens.get(nome_item)
+            if img_item:
+                img_item = pygame.transform.scale(img_item, (80, 80))
+                self.tela.blit(img_item, (rect_item.x + 10, rect_item.y + 10))
+            
+            pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2)
 
         def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado, img_verso=None):
             for i in range(qtd_itens):

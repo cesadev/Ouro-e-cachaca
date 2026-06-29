@@ -7,8 +7,9 @@ from cenas_tutorial.tutorial import CenaTutorial
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
 from cenas_tutorial.matinta import CenaMatinta
-from cenas_tutorial.batalha import CenaCombate
+from batalha import CenaCombate
 from cenas_tutorial.fases_tutorial import fases_do_tutorial
+from itens import lista_itens
 
 
 from cenas_tutorial.comprar_cartas import CenaEscolhaCarta
@@ -55,7 +56,7 @@ def main():
     nomes_cartas = ["acaua", "anhanga", "boitata", "caboclo", "capelobo", 
                     "chupa-cabra", "cobra_coral", "comadre", "cuca", 
                     "curupira", "la_ursa", "leao", "mula", "timbu","perna",
-                    "cacto",] 
+                    "cacto"] 
     imagens_cartas = {}
 
 # mudança nome das cartas
@@ -78,9 +79,17 @@ def main():
 
     # elementos de interface e cenário
     imagens_ui = {}
-    
+
+    for item in lista_itens:
+        try:
+            img_original = pygame.image.load(f"verso/{item}.png").convert_alpha()
+            imagens_ui[nome] = pygame.transform.scale(img_original, (100, 100))
+        except FileNotFoundError:
+            imagens_ui[nome] = None
+
     # Carregando Copos, Campainha e o Fundo de Combate
     try:
+        
         imagens_ui["copo1"] = pygame.transform.scale(pygame.image.load("assets/copo1.png").convert_alpha(), (80, 96))
         imagens_ui["copo2"] = pygame.transform.scale(pygame.image.load("assets/copo2.png").convert_alpha(), (80, 96))
         imagens_ui["campainha"] = pygame.transform.scale(pygame.image.load("assets/campainha.png").convert_alpha(), (120, 120))
@@ -220,7 +229,7 @@ def main():
 
         if proxima == "combate1":
             dados_fase = fases_do_tutorial.get("combate1") 
-            nova_cena = CenaCombate(tela,deck_jogador_global, dados_fase, itens_jogador_global, vida_player_global,imagens_versos,imagens_cartas)
+            nova_cena = CenaCombate(tela,deck_jogador_global, dados_fase, itens_jogador_global, vida_player_global,imagens_versos,imagens_cartas,imagens_ui)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

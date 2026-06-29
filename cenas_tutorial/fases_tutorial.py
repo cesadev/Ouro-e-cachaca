@@ -2,21 +2,21 @@ fases_do_tutorial = {
     "combate1":{
         "script_inimigo": {
             1:[
-                {"acao": "jogar_carta", "carta": {"nome": "Acauã", "vida": 3, "dano": 2}, "slot": 1}
+                {"acao": "jogar_carta", "carta": {"nome": "acaua", "vida": 3, "dano": 2}, "slot": 1}
             ],
             2: [{}],
-            3: [{"acao": "jogar_carta", "carta": {"nome": "Comadre Florzinha", "vida": 1, "dano": 1}, "slot": 2}]
+            3: [{"acao": "jogar_carta", "carta": {"nome": "comadre", "vida": 1, "dano": 1}, "slot": 2}]
         }
     },
     
     "luta_2_mapa_1":{
         "script_inimigo": {
             1:[
-                {"acao": "jogar_carta", "carta": {"nome": "Mula Sem-Cabeça", "vida": 4, "dano": 3}, "slot": 0}
+                {"acao": "jogar_carta", "carta": {"nome": "mula", "vida": 4, "dano": 3}, "slot": 0}
             ],
             2: [],
             3: [
-                {"acao": "jogar_carta", "carta": {"nome": "Comadre Florzinha", "vida": 1, "dano": 1}, "slot": 2}
+                {"acao": "jogar_carta", "carta": {"nome": "comadre", "vida": 1, "dano": 1}, "slot": 2}
             ]
         }
     },
