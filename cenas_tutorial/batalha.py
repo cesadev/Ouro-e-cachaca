@@ -3,27 +3,31 @@ import math
 import random
 from cena_base import CenaBase
 from cartas import Carta
+from itens import lista_itens
 
 class CenaCombate(CenaBase):
-    def __init__(self, tela, deck_jogador, dados_da_fase, vida_player, imagens_versos, imagens_cartas):
+    def __init__(self, tela, deck_jogador, dados_da_fase, itens_jogador_global, vida_player, imagens_versos, imagens_cartas):
         super().__init__(tela) 
         self.imagens_cartas = imagens_cartas
         tamanho_copo = (80, 96) 
-
+        self.aguardando_alvo_peixeira = False
         self.nome_boss = dados_da_fase.get("nome", "Inimigo Desconhecido")
         self.script_inimigo = dados_da_fase.get("script_inimigo", {})
         self.obstaculos = dados_da_fase.get("obstaculos_iniciais", [])
+        self.itens_jogador = itens_jogador_global
 
         try:
             self.img_copo1 = pygame.transform.scale(pygame.image.load("assets/copo1.png").convert_alpha(), tamanho_copo)
             self.img_copo2 = pygame.transform.scale(pygame.image.load("assets/copo2.png").convert_alpha(), tamanho_copo)
+        
         except FileNotFoundError:
             self.img_copo1 = None
             self.img_copo2 = None
 
-        self.img_verso_deck = imagens_versos.get("verso_deck")
-        self.img_verso_pernas = imagens_versos.get("verso_pernas")
+        self.img_verso_deck = imagens_versos.get("verso_carta")
+        self.img_verso_pernas = imagens_versos.get("verso_perna")
         self.img_campainha = self._carregar_img("campainha", scale=(120, 120))
+        self.img_perna = imagens_cartas.get("perna")
 
 
         self.deck_jogador = [
@@ -116,7 +120,7 @@ class CenaCombate(CenaBase):
         self.hitboxes_slots_espera = [] 
         self.hitboxes_vida = [] 
         self.hitboxes_itens = []
-        self.itens_jogador = [{"nome": "Abridor de Lata"}, {"nome": "Peixeira"}]
+        
 
         self.mensagem_debug = dados_da_fase.get("mensagem_inicio", "Início do Turno: Jogue suas cartas!")
         self.debug = pygame.font.SysFont("Arial", 36)
@@ -195,14 +199,59 @@ class CenaCombate(CenaBase):
         if "espinhos" in carta_alvo.selos:
             carta_atacante.vida -= 1
             print("Espinhos deram dano de volta!")
+    def aplicar_efeito_item(self, nome_item):
+        if nome_item == "Peixeira":
+            # Lógica para eliminar carta do inimigo
+            # Ex: pedir para clicar em um slot inimigo e self.slots_inimigos[i] = None
+            self.mensagem_debug = "Selecione uma carta inimiga para destruir."
             
+        elif nome_item == "Cantil":
+            self.vida_player += 1
+            self.mensagem_debug = "Glup! +1 de vida."
+            
+        elif nome_item == "Abridor de Cerveja":
+            self.peso_balanca += 5
+            self.mensagem_debug = "Balança puxou 5 pontos!"
+            
+        elif nome_item == "Garrafa com Perna":
+            self.mao_jogador += 1
+            self.mensagem_debug = "Uma perna extra adicionada!"
+
+        if nome_item == "Peixeira":
+            self.aguardando_alvo_peixeira = True
+            self.mensagem_debug = "Peixeira pronta! Clique em uma carta inimiga para destruir."
+        
     def processar_eventos(self, eventos):
+        clicou_valido = False
         for event in eventos:
             if event.type != pygame.MOUSEBUTTONDOWN:
                 continue
 
             pos_mouse = pygame.mouse.get_pos()
 
+            if event.button == 1:
+                pos_mouse = pygame.mouse.get_pos()
+
+                if self.aguardando_alvo_peixeira:
+                    for rect_slot, i in self.hitboxes_slots_inimigos:
+                        if rect_slot.collidepoint(pos_mouse):
+                            if self.slots_inimigos[i] is not None:
+                        #Destrói a carta
+                                self.slots_inimigos[i] = None 
+                                self.aguardando_alvo_peixeira = False
+                                self.mensagem_debug = "Peixeira usada! Inimigo eliminado."
+                                self.itens_jogador.remove({"nome": "Peixeira"})
+                            return
+                        else:
+                            self.mensagem_debug = "Slot vazio. Tente novamente."
+                
+                # Verifica clique nos itens
+                for rect, nome_item in self.hitboxes_itens:
+                    if rect.collidepoint(pos_mouse):
+                        self.aplicar_efeito_item(nome_item)
+                        # Opcional: remover o item da lista após o uso
+                        self.itens_jogador.remove({"nome": nome_item}) 
+                        return
             # CANCELAR AÇÃO
             if event.button == 3:
                 if self.estado_atual in ["sacrificio", "posicionamento"]:
@@ -229,16 +278,7 @@ class CenaCombate(CenaBase):
                     continue
 
                 if self.pernas_disponiveis > 0:
-                    self.mao_jogador.append(
-                        Carta(
-                            "Perna Cabeluda",
-                            0,
-                            1,
-                            self.img_perna,
-                            0,
-                            1
-                        )
-                    )
+                    self.mao_jogador.append(Carta("Perna Cabeluda", 0, 1, self.imagens_cartas.get("perna"), 0, 1))
 
                     self.pernas_disponiveis -= 1
                     self.ja_comprou_neste_turno = True
@@ -350,7 +390,6 @@ class CenaCombate(CenaBase):
 
 
             elif self.estado_atual == "sacrificio":
-
                 clicou_valido = False
 
                 for rect_slot, i in self.hitboxes_slots_aliados:
@@ -686,6 +725,21 @@ class CenaCombate(CenaBase):
         piscar = self.estado_atual == "fase_compra" and (pygame.time.get_ticks() % 1000 < 500)
         cor_pernas_base = (200, 50, 50) if piscar else (255, 105, 97)
         cor_deck_base = (120, 150, 160) if piscar else (174, 198, 207)
+        # No método desenhar() do batalha.py
+        for i, nome_item in enumerate(self.itens_jogador):
+            rect_item = pygame.Rect(1190 + (i * 140), 330, 100, 100) # Ajuste o X e Y conforme necessário
+            
+            pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
+            
+            dados = lista_itens.get(nome_item)
+            if dados:
+                try:
+
+                    img = pygame.image.load(f"cartas/{dados['imagem']}").convert_alpha()
+                    img = pygame.transform.scale(img, (80, 80))
+                    self.tela.blit(img, (rect_item.x + 10, rect_item.y + 10))
+                except:
+                    pass 
 
         def desenhar_pilha(pos_rect, qtd_itens, lista_bagunca, cor_base, bloqueado, img_verso=None):
             for i in range(qtd_itens):
@@ -734,7 +788,22 @@ class CenaCombate(CenaBase):
 
         for rect_item, item in self.hitboxes_itens:
             pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
-            pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2) 
+            pygame.draw.rect(self.tela, (46, 111, 64), rect_item)
+            
+            nome = item["nome"] 
+            if nome in lista_itens:
+                caminho_img = lista_itens[nome]["imagem"]
+                try:
+                    img_item = pygame.image.load(caminho_img).convert_alpha()
+                    img_item = pygame.transform.scale(img_item, (rect_item.width - 20, rect_item.height - 20))
+                    self.tela.blit(img_item, (rect_item.x + 10, rect_item.y + 10))
+                except:
+                    print(f"Erro ao carregar imagem: {caminho_img}")
+                    
+            # 3. Desenha a borda por cima
+            pygame.draw.rect(self.tela, (255, 255, 255), rect_item, 2)
+
+            
             
         # mini cartas
         for rect_mini, i in self.hitboxes_slots_espera:
@@ -761,7 +830,9 @@ class CenaCombate(CenaBase):
         # cartas inimigos
         for rect_slot, i in self.hitboxes_slots_inimigos:
             rect_desenho = rect_slot.copy()
-            
+            if self.aguardando_alvo_peixeira and self.slots_inimigos[i] is not None:
+                tremor = math.sin(pygame.time.get_ticks() * 0.02) * 5 
+                rect_desenho.x += int(tremor)
             if self.turno_atual == "resolvendo_combate" and self.fase_resolucao == "inimigos" and self.idx_atacante_atual == i:
                 fator_onda = math.sin(self.progresso_ataque * math.pi)
                 alvo_vazio = self.slots_aliados[i] is None
@@ -911,10 +982,6 @@ if __name__ == "__main__":
         for evento in eventos:
             if evento.type == pygame.QUIT:
                 rodando = False
-
-        cena_teste.processar_eventos(eventos)
-        cena_teste.atualizar(dt)
-        cena_teste.desenhar()
 
         pygame.display.flip()
 

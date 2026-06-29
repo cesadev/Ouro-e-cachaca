@@ -220,7 +220,7 @@ def main():
 
         if proxima == "combate1":
             dados_fase = fases_do_tutorial.get("combate1") 
-            nova_cena = CenaCombate(tela,deck_jogador_global, dados_fase, vida_player_global,imagens_versos,imagens_cartas)
+            nova_cena = CenaCombate(tela,deck_jogador_global, dados_fase, itens_jogador_global, vida_player_global,imagens_versos,imagens_cartas)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

@@ -33,7 +33,8 @@ class CenaMochila(CenaBase):
         todos_itens = [
             Item("Peixeira", "assets/peixeira.png"),
             Item("Cantil", "assets/cantil.png"),
-            Item("Abridor de Cerveja", "assets/cerveja.png")
+            Item("Abridor de Cerveja", "assets/cerveja.png"),
+            Item("Garrafa com Perna", "assets/garrafa.png")
         ]
         # Embaralha os 2 itens para virem em ordem aleatória
         self.itens_sorteados = random.sample(todos_itens, 2)
