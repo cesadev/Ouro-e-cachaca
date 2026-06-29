@@ -18,6 +18,7 @@ from cenas_tutorial.inventario import CenaInventario
 from cenas_tutorial.mochila_tutorial import CenaMochila
 from cenas_tutorial.cena_opcoes import CenaOpcoes
 from cenas_tutorial.cena_pause import CenaPause
+from cenas_caboclo.mapa_caboclo import CenaMapa as CenaMapaCaboclo
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -110,6 +111,8 @@ def main():
     vida_player_global = 2
     nivel_batalha_global = 1
     nodo_atual_global = 0
+    nodo_caboclo_global = 0
+    map_type_global = "tutorial"
 
     #cartas iniciais (globais)
     deck_jogador_global = [
@@ -160,6 +163,9 @@ def main():
             if isinstance(cena_atual, CenaMapa):
                 if hasattr(cena_atual, 'nodo_atual'):
                     nodo_atual_global = cena_atual.nodo_atual
+            elif isinstance(cena_atual, CenaMapaCaboclo):
+                if hasattr(cena_atual, 'nodo_atual'):
+                    nodo_caboclo_global = cena_atual.nodo_atual
 
             if hasattr(cena_atual, 'carta_escolhida') and cena_atual.carta_escolhida is not None:
                 deck_jogador_global.append(cena_atual.carta_escolhida)
@@ -198,7 +204,17 @@ def main():
             proxima = None
 
         if proxima == "mapa":
-            nova_cena = CenaMapa(tela, nodo_atual_global) 
+            if map_type_global == "caboclo":
+                nova_cena = CenaMapaCaboclo(tela, nodo_caboclo_global)
+            else:
+                nova_cena = CenaMapa(tela, nodo_atual_global)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        if proxima == "mapa_caboclo":
+            map_type_global = "caboclo"
+            nova_cena = CenaMapaCaboclo(tela, nodo_caboclo_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

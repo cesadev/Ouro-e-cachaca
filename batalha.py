@@ -131,6 +131,8 @@ class CenaCombate(CenaBase):
         self.fonte_cartas = pygame.font.SysFont("Arial", 20) 
         self.fonte_vida = pygame.font.SysFont("Arial", 30, bold=True)
         self.fonte_mini = pygame.font.SysFont("Arial", 14) 
+        self.fonte_btn = pygame.font.SysFont("Arial", 22, bold=True)
+        self.rect_pular_batalha = pygame.Rect(50, 20, 260, 52)
         self.index_foco = None 
         
 
@@ -232,6 +234,12 @@ class CenaCombate(CenaBase):
                 continue
 
             pos_mouse = pygame.mouse.get_pos()
+
+            if event.button == 1 and self.rect_pular_batalha.collidepoint(pos_mouse):
+                self.terminou = True
+                self.proxima_cena = "mapa_caboclo"
+                self.mensagem_debug = "Batalha pulada."
+                return
 
             if event.button == 1:
                 pos_mouse = pygame.mouse.get_pos()
@@ -700,6 +708,14 @@ class CenaCombate(CenaBase):
 
     def desenhar(self):
         self.tela.blit(self.imagem_fundo, (0, 0))
+
+        pygame.draw.rect(self.tela, (225, 180, 50), self.rect_pular_batalha)
+        pygame.draw.rect(self.tela, (255, 255, 255), self.rect_pular_batalha, 3)
+        txt_pular = self.fonte_btn.render("PULAR BATALHA", True, (30, 30, 30))
+        self.tela.blit(txt_pular, (
+            self.rect_pular_batalha.centerx - txt_pular.get_width() // 2,
+            self.rect_pular_batalha.centery - txt_pular.get_height() // 2
+        ))
 
         centro_x, centro_y, raio = 240, 350, 128
         angulo_rad = math.radians(self.peso_balanca * 2.5)

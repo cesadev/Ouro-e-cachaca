@@ -76,7 +76,7 @@ class CenaMochila(CenaBase):
                 elif self.estado_animacao == "finalizado":
                     self.itens_adquiridos = self.itens_sorteados
                     self.terminou = True
-                    self.proxima_cena = "mapa"
+                    self.proxima_cena = "mapa_caboclo"
 
     def atualizar(self, dt):
         self.tempo_animacao += dt * 0.005 # Velocidade do pulsar

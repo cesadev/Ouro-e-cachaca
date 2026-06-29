@@ -93,6 +93,8 @@ class CenaTutorial(CenaBase):
         self.fonte_vida = pygame.font.SysFont("Arial", 30, bold=True)
         self.fonte_mini = pygame.font.SysFont("Arial", 14) 
         self.fonte_dialogo = pygame.font.SysFont("Arial", 40)
+        self.fonte_btn = pygame.font.SysFont("Arial", 22, bold=True)
+        self.rect_pular_batalha = pygame.Rect(50, 20, 260, 52)
         self.index_foco = None 
 
         self.adicionar_dialogos(["Joga a Perna Cabeluda"])
@@ -106,6 +108,11 @@ class CenaTutorial(CenaBase):
         if self.dialogo_atual:
             for event in eventos:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    pos_mouse = pygame.mouse.get_pos()
+                    if self.rect_pular_batalha.collidepoint(pos_mouse):
+                        self.terminou = True
+                        self.proxima_cena = "mapa"
+                        return
                     if self.dialogos_pendentes:
                         self.dialogo_atual = self.dialogos_pendentes.pop(0)
                     else:
@@ -115,6 +122,11 @@ class CenaTutorial(CenaBase):
         for event in eventos:
             if event.type == pygame.MOUSEBUTTONDOWN: 
                 pos_mouse = pygame.mouse.get_pos()
+
+                if event.button == 1 and self.rect_pular_batalha.collidepoint(pos_mouse):
+                    self.terminou = True
+                    self.proxima_cena = "mapa"
+                    return
                 
                 # opção de cancelar com o botao direito
                 if event.button == 3:
@@ -287,6 +299,9 @@ class CenaTutorial(CenaBase):
     def atualizar(self, dt):
         if self.dialogo_atual:
             return 
+
+        if self.terminou:
+            return
 
         for idx in range(4):
             if self.flash_aliado[idx] > 0: self.flash_aliado[idx] -= dt
@@ -539,6 +554,15 @@ class CenaTutorial(CenaBase):
 
         txt_balanca = self.debug.render(f"{self.peso_balanca}", True, (255, 255, 255))
         self.tela.blit(txt_balanca, (centro_x - txt_balanca.get_width()//2, centro_y - 30))
+
+        # botão pular batalha
+        pygame.draw.rect(self.tela, (225, 180, 50), self.rect_pular_batalha)
+        pygame.draw.rect(self.tela, (255, 255, 255), self.rect_pular_batalha, 3)
+        txt_pular = self.fonte_btn.render("PULAR BATALHA", True, (30, 30, 30))
+        self.tela.blit(txt_pular, (
+            self.rect_pular_batalha.centerx - txt_pular.get_width() // 2,
+            self.rect_pular_batalha.centery - txt_pular.get_height() // 2
+        ))
 
         # campainha
         if self.img_campainha:
