@@ -19,7 +19,7 @@ class CenaTutorial(CenaBase):
         self.mao_jogador = [
             Carta("Perna Cabeluda", 0, 1, imagens_cartas.get("perna"), 0, 1),
             Carta("Capelobo", 1, 2, imagens_cartas.get("capelobo"), 1, 1),
-            Carta("Curupira", 2, 2, imagens_cartas.get("curupira"), 2, 1),
+            Carta("Curupira", 3, 2, imagens_cartas.get("curupira"), 2, 1),
             Carta("Capelobo", 1, 2, imagens_cartas.get("capelobo"), 1, 1)
         ]
         self.deck_jogador = [
