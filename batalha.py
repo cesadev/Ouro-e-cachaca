@@ -22,7 +22,7 @@ class CenaCombate(CenaBase):
         # --- Imagens ---
         self.img_verso_deck = imagens_versos.get("verso_carta")
         self.img_verso_pernas = imagens_versos.get("verso_perna")
-        self.img_campainha = self.imagens_ui.get("campainha", scale=(120, 120))
+        self.img_campainha = imagens_ui.get("campainha")
         self.img_copo1 = imagens_ui.get("copo1")
         self.img_copo2 = imagens_ui.get("copo2")
 
