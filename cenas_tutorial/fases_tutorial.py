@@ -10,7 +10,7 @@ fases_do_tutorial = {
         "script_inimigo": {
             1: [{"acao": "jogar_carta", "carta": {"nome": "acaua", "vida": 3, "dano": 2, "selos": ["voar"]}, "slot": 2},
                 {"acao": "jogar_carta", "carta": {"nome": "boitata", "vida": 1, "dano": 2, "selos": []}, "slot": 1}],
-            2: [{"acao": "jogar_carta", "carta": {"nome": "capelobo", "vida": 3, "dano": 1, "selos": []}, "slot": 1}]
+            2: [{"acao": "jogar_carta", "carta": {"nome": "capelobo", "vida": 2, "dano": 1, "selos": []}, "slot": 1}]
         }
     },
 
