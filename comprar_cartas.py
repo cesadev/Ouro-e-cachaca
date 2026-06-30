@@ -28,7 +28,7 @@ class CenaEscolhaCarta(CenaBase):
 
 
         todas_as_cartas = [
-            Carta("Acauã", 2, 3, imagens_cartas.get("acaua"), 2, 1, selos=["voador"]),
+            Carta("Acauã", 2, 3, imagens_cartas.get("acaua"), 2, 1, selos=["voar"]),
             Carta("Anhangá", 3, 7, imagens_cartas.get("anhanga"), 4, 1),
             Carta("Boitatá", 2, 1, imagens_cartas.get("boitata"), 2, 1),
             Carta("Caboclo D'água", 1, 1, imagens_cartas.get("caboclo"), 1, 1, selos=["mergulhador"]),
