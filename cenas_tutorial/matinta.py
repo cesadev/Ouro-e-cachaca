@@ -12,10 +12,11 @@ DICIONARIO_SELOS = {
 }
 
 class CenaMatinta(CenaBase):
-    def __init__(self, tela, imagens_cartas, deck_jogador_global):
+    def __init__(self, tela, imagens_cartas, deck_jogador_global, proxima_depois="mapa"):
         super().__init__(tela)
         self.tela = tela
         self.deck = deck_jogador_global
+        self.proxima_depois = proxima_depois
         
         try:
             img = pygame.image.load("cenarios/fundo_draft.png").convert()
@@ -132,7 +133,7 @@ class CenaMatinta(CenaBase):
 
                 elif self.estado == "dialogo_final":
                     self.terminou = True
-                    self.proxima_cena = "mapa"
+                    self.proxima_cena = self.proxima_depois
 
     def atualizar(self, dt):
         pass

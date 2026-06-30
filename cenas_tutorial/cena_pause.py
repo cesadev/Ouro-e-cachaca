@@ -12,8 +12,9 @@ class CenaPause(CenaBase):
         self.fonte_botao = pygame.font.SysFont("Arial", 30, bold=True)
 
         largura, altura = tela.get_size()
-        self.rect_continuar = pygame.Rect(largura // 2 - 180, altura // 2 - 40, 360, 60)
-        self.rect_menu = pygame.Rect(largura // 2 - 180, altura // 2 + 40, 360, 60)
+        self.rect_continuar = pygame.Rect(largura // 2 - 180, altura // 2 - 60, 360, 60)
+        self.rect_config = pygame.Rect(largura // 2 - 180, altura // 2 + 10, 360, 60)
+        self.rect_menu = pygame.Rect(largura // 2 - 180, altura // 2 + 80, 360, 60)
 
     def processar_eventos(self, eventos):
         for evento in eventos:
@@ -22,7 +23,10 @@ class CenaPause(CenaBase):
                 if self.rect_continuar.collidepoint(pos_mouse):
                     self.terminou = True
                     self.proxima_cena = self.cena_anterior
-                if self.rect_menu.collidepoint(pos_mouse):
+                elif self.rect_config.collidepoint(pos_mouse):
+                    self.terminou = True
+                    self.proxima_cena = ("opcoes", self.cena_anterior)
+                elif self.rect_menu.collidepoint(pos_mouse):
                     self.terminou = True
                     self.proxima_cena = "menu"
 
@@ -46,6 +50,12 @@ class CenaPause(CenaBase):
         txt_continuar = self.fonte_botao.render("CONTINUAR", True, (255, 255, 255))
         self.tela.blit(txt_continuar, (self.rect_continuar.centerx - txt_continuar.get_width() // 2,
                                        self.rect_continuar.centery - txt_continuar.get_height() // 2))
+
+        pygame.draw.rect(self.tela, (40, 40, 50), self.rect_config)
+        pygame.draw.rect(self.tela, (255, 215, 0), self.rect_config, 3)
+        txt_config = self.fonte_botao.render("CONFIGURAÇÕES", True, (255, 255, 255))
+        self.tela.blit(txt_config, (self.rect_config.centerx - txt_config.get_width() // 2,
+                                     self.rect_config.centery - txt_config.get_height() // 2))
 
         pygame.draw.rect(self.tela, (40, 40, 50), self.rect_menu)
         pygame.draw.rect(self.tela, (255, 215, 0), self.rect_menu, 3)
