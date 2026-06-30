@@ -10,12 +10,15 @@ from cenas_caboclo.mapa_caboclo import CenaMapa as CenaMapaCaboclo
 from cenas_papafigo.mapa_papafigo import CenaMapa as CenaMapaPapafigo
 
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
-from cenas_tutorial.matinta import CenaMatinta
+
+from cenas_tutorial.matinta_tutorial import CenaMatinta as CenaMatintaTutorial
+from matinta import CenaMatinta
+
 from batalha import CenaCombate
 from cenas_tutorial.fases_tutorial import fases_do_tutorial
-from cenas_tutorial.comprar_cartas import CenaEscolhaCarta
+from comprar_cartas import CenaEscolhaCarta
 from cenas_tutorial.creditos import CenaCreditos
-from cenas_tutorial.inventario import CenaInventario
+from inventario import CenaInventario
 from cenas_tutorial.mochila_tutorial import CenaMochila
 from cenas_tutorial.cena_opcoes import CenaOpcoes
 from cenas_tutorial.cena_pause import CenaPause
@@ -232,7 +235,7 @@ def main():
             proxima = None
             
         elif proxima == "inventario":
-            nova_cena = CenaInventario(tela, deck_jogador_global)
+            nova_cena = CenaInventario(tela, deck_jogador_global, itens_jogador_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
@@ -259,13 +262,18 @@ def main():
             proxima = None
         
         elif proxima == "fogueira":
-            nova_cena = CenaFogueira(tela)
+            nova_cena = CenaFogueira(tela, deck_jogador_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
 
+        elif proxima == "fogueira_tutorial":
+            nova_cena = CenaFogueiraTutorial(tela, deck_jogador_global)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
 
-        elif proxima == "selos":
+        elif proxima == "matinta":
             if mapa_atual == "caboclo":
                 destino_volta = "mapa_caboclo"
 
@@ -274,6 +282,13 @@ def main():
             else:
                 destino_volta = "mapa"
 
+            nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global, destino_volta)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        elif proxima == "matinta_tutorial":
+            destino_volta = "mapa"
             nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global, destino_volta)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
