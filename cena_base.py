@@ -5,13 +5,13 @@ class CenaBase:
     """
     def __init__(self, tela):
         self.tela = tela
-        # Quando essa variável mudar, o jogo sabe que tem que trocar de tela
+        #Troca de tela sempre que essa variável mudar
         self.proxima_cena = self 
 
     def processar_eventos(self, eventos):
         """
-        Recebe a lista de eventos do Pygame (cliques, teclas).
-        Cada cena filha vai definir o que fazer com os cliques aqui.
+        Recebe a lista de eventos do Pygame (cliques, teclas, etc).
+        Toda cena filha vai ter que passar suas configurações exatamente aqui.
         """
         pass
 

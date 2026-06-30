@@ -4,8 +4,11 @@ from menu import Menu
 from cartas import Carta
 from cenas_tutorial.cena_introducao import CenaIntroducao
 from cenas_tutorial.tutorial import CenaTutorial
+
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_caboclo.mapa_caboclo import CenaMapa as CenaMapaCaboclo
+from cenas_papafigo.mapa_papafigo import CenaMapa as CenaMapaPapafigo
+
 from cenas_tutorial.combate_tutorial import CenaCombateTutorial
 from cenas_tutorial.matinta import CenaMatinta
 from batalha import CenaCombate
@@ -16,7 +19,8 @@ from cenas_tutorial.inventario import CenaInventario
 from cenas_tutorial.mochila_tutorial import CenaMochila
 from cenas_tutorial.cena_opcoes import CenaOpcoes
 from cenas_tutorial.cena_pause import CenaPause
-
+from cenas_tutorial.fogueira_tutorial import CenaFogueiraTutorial
+from fogueira import CenaFogueira
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -105,6 +109,7 @@ def main():
     nivel_batalha_global = 1
     nodo_atual_tutorial_global = 0
     nodo_atual_caboclo_global = 0
+    nodo_atual_papafigo_global = 0
     mapa_atual = "tutorial"
 
     deck_jogador_global = [
@@ -155,13 +160,16 @@ def main():
                 if getattr(cena_atual, 'resultado', None) == "vitoria":
                     nivel_batalha_global += 1
 
-            # Salva posição do mapa de tutorial ou do Caboclo
+            # Salva posição do mapa atual
             if isinstance(cena_atual, CenaMapa) and hasattr(cena_atual, 'nodo_atual'):
                 nodo_atual_tutorial_global = cena_atual.nodo_atual
                 mapa_atual = "tutorial"
             elif isinstance(cena_atual, CenaMapaCaboclo) and hasattr(cena_atual, 'nodo_atual'):
                 nodo_atual_caboclo_global = cena_atual.nodo_atual
                 mapa_atual = "caboclo"
+            elif isinstance(cena_atual, CenaMapaPapafigo) and hasattr(cena_atual, 'nodo_atual'):
+                nodo_atual_papafigo_global = cena_atual.nodo_atual
+                mapa_atual = "papafigo"
 
             # Adiciona carta escolhida ao deck
             if hasattr(cena_atual, 'carta_escolhida') and cena_atual.carta_escolhida is not None:
@@ -199,6 +207,10 @@ def main():
         elif proxima == "mapa":
             if mapa_atual == "caboclo":
                 nova_cena = CenaMapaCaboclo(tela, nodo_atual_caboclo_global)
+            
+            elif mapa_atual == "papafigo":
+                nova_cena = CenaMapaPapafigo(tela, nodo_atual_papafigo_global)
+
             else:
                 nova_cena = CenaMapa(tela, nodo_atual_tutorial_global)
             efeito_transicao(tela, nova_cena)
@@ -212,6 +224,13 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
+        elif proxima == "mapa_papafigo":
+            mapa_atual = "papafigo"
+            nova_cena = CenaMapaPapafigo(tela, nodo_atual_caboclo_global)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+            
         elif proxima == "inventario":
             nova_cena = CenaInventario(tela, deck_jogador_global)
             efeito_transicao(tela, nova_cena)
@@ -238,16 +257,32 @@ def main():
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
+        
+        elif proxima == "fogueira":
+            nova_cena = CenaFogueira(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
 
         elif proxima == "selos":
-            destino_volta = "mapa_caboclo" if mapa_atual == "caboclo" else "mapa"
+            if mapa_atual == "caboclo":
+                destino_volta = "mapa_caboclo"
+
+            elif mapa_atual == "papafigo":
+                destino_volta = "mapa_papafigo"
+            else:
+                destino_volta = "mapa"
+
             nova_cena = CenaMatinta(tela, imagens_cartas, deck_jogador_global, destino_volta)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
 
-        elif proxima == "combate1":
-            dados_fase = fases_do_tutorial.get("combate1")
+        #==============SEÇÃO DE LUTAS =============
+        #1. LUTAS DO TUTORIAL
+        elif proxima == "luta_1_tutorial":
+            dados_fase = fases_do_tutorial.get("luta_1_tutorial")
             nova_cena = CenaCombate(
                 tela, deck_jogador_global, dados_fase,
                 itens_jogador_global, vida_player_global,
@@ -256,6 +291,77 @@ def main():
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
+
+        elif proxima == "luta_2_tutorial":
+            dados_fase = fases_do_tutorial.get("luta_2_tutorial")
+            nova_cena = CenaCombate(
+                tela, deck_jogador_global, dados_fase,
+                itens_jogador_global, vida_player_global,
+                imagens_versos, imagens_cartas, imagens_ui
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        elif proxima == "luta_3_tutorial":
+            dados_fase = fases_do_tutorial.get("luta_3_tutorial")
+            nova_cena = CenaCombate(
+                tela, deck_jogador_global, dados_fase,
+                itens_jogador_global, vida_player_global,
+                imagens_versos, imagens_cartas, imagens_ui
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        #2. LUTAS DO MAPA_CABOCLO
+
+        elif proxima == "luta_1_mapa_1":
+            dados_fase = fases_do_tutorial.get("luta_1_mapa_1")
+            nova_cena = CenaCombate(
+                tela, deck_jogador_global, dados_fase,
+                itens_jogador_global, vida_player_global,
+                imagens_versos, imagens_cartas, imagens_ui
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+        
+        elif proxima == "luta_2_mapa_2":
+            dados_fase = fases_do_tutorial.get("luta_2_mapa_2")
+            nova_cena = CenaCombate(
+                tela, deck_jogador_global, dados_fase,
+                itens_jogador_global, vida_player_global,
+                imagens_versos, imagens_cartas, imagens_ui
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+        
+        elif proxima == "luta_3_mapa_3":
+            dados_fase = fases_do_tutorial.get("luta_3_mapa_3")
+            nova_cena = CenaCombate(
+                tela, deck_jogador_global, dados_fase,
+                itens_jogador_global, vida_player_global,
+                imagens_versos, imagens_cartas, imagens_ui
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+        
+        elif proxima == "boss_1":
+            dados_fase = fases_do_tutorial.get("boss_1")
+            nova_cena = CenaCombate(
+                tela, deck_jogador_global, dados_fase,
+                itens_jogador_global, vida_player_global,
+                imagens_versos, imagens_cartas, imagens_ui
+            )
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+        
+        #3. LUTAS DO MAPA_PAPAFIGO
+
 
         elif proxima == "creditos":
             nova_cena = CenaCreditos(tela)

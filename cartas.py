@@ -20,10 +20,10 @@ class Carta:
 
     def adicionar_novo_selo(self, nome_selo_logica, nome_arquivo_imagem):
         """
-        Carimba QUALQUER selo novo diretamente na arte da carta e adiciona ele na lógica.
+        Carimba QUALQUER selo novo diretamente na arte da carta e adiciona ele na lógica/back-end.
         """
         try:
-            # Puxa o selo baseado no nome do arquivo
+            # Puxa o selo baseado no nome do arquivo do caminho
             caminho = f"selos/{nome_arquivo_imagem}"
             img_temp = pygame.image.load(caminho).convert_alpha()
             img_selo = pygame.transform.scale(img_temp, (45, 45))
@@ -36,7 +36,7 @@ class Carta:
                 pos_selo_y = 25
                 
                 pos_selo_x += 35 * len(self.selos)
-                # FUNDIR O SELO NA CARTA
+                # Coloca o Selo na Carta
                 self.imagem.blit(img_selo, (pos_selo_x, pos_selo_y))
             
             self.selos.append(nome_selo_logica)

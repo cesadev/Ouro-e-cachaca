@@ -879,7 +879,6 @@ class CenaCombate(CenaBase):
         pygame.draw.rect(self.tela, (0, 0, 0), rect_texto.inflate(20, 10)) 
         self.tela.blit(texto_surface, rect_texto)
 
-
 if __name__ == "__main__":
     pygame.init()
     
