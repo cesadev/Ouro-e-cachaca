@@ -355,8 +355,9 @@ class CenaCombate(CenaBase):
                 carta_tentativa = self.mao_jogador[self.index_foco]
                 custo = carta_tentativa.custo_sangue
                 sangue_disponivel = sum(
-                    carta.valor_sacrificio for carta in self.slots_aliados if carta is not None
-                )
+                    (3 if "sangue" in carta.selos else carta.valor_sacrificio)
+                    for carta in self.slots_aliados if carta is not None
+                )   
 
                 if custo > sangue_disponivel:
                     self.mensagem_debug = f"Necessário {custo} sangue."
@@ -385,7 +386,7 @@ class CenaCombate(CenaBase):
                                 and i not in self.slots_sacrificados_pendentes):
                             self.slots_sacrificados_pendentes.append(i)
                             sangue_acumulado = sum(
-                                self.slots_aliados[idx].valor_sacrificio
+                                (3 if "sangue" in self.slots_aliados[idx].selos else self.slots_aliados[idx].valor_sacrificio)
                                 for idx in self.slots_sacrificados_pendentes
                             )
                             if sangue_acumulado >= self.sangue_necessario:
@@ -574,18 +575,50 @@ class CenaCombate(CenaBase):
             self.progresso_ataque += dt * self.velocidade_ataque
 
             if self.progresso_ataque >= 0.5 and not self.dano_aplicado:
-                if self.slots_inimigos[self.idx_atacante_atual] is not None:
-                    self.slots_inimigos[self.idx_atacante_atual].vida -= card_atacante.dano
-                    self.flash_inimigo[self.idx_atacante_atual] = 200
-                    if self.slots_inimigos[self.idx_atacante_atual].vida <= 0:
-                        self.slots_inimigos[self.idx_atacante_atual] = None
-                else:
-                    self.peso_balanca += card_atacante.dano
-                    if self.peso_balanca >= 5:
-                        self.mensagem_debug = "VITÓRIA! A balança tombou totalmente."
-                        self.terminou = True
-                        self.proxima_cena = "mapa"
-                        return
+                # Se tiver ataque triplo, cria uma lista com 3 alvos. Se não, ataca só a frente.
+                alvos = [self.idx_atacante_atual]
+                if "ataque_triplo" in card_atacante.selos:
+                    alvos = [i for i in [self.idx_atacante_atual - 1, self.idx_atacante_atual, self.idx_atacante_atual + 1] if 0 <= i <= 3]
+                
+                for alvo_idx in alvos:
+                    if card_atacante.vida <= 0:
+                        break  # Se a carta morreu para um espinho no meio do ataque triplo, para de atacar!
+                        
+                    card_alvo = self.slots_inimigos[alvo_idx]
+                    
+                    
+                    if "voar" in card_atacante.selos or "mergulhador" in card_atacante.selos:
+                        self.peso_balanca += card_atacante.dano
+                    
+                    elif card_alvo is not None and "mergulhador" not in card_alvo.selos:
+                        dano_causado = 999 if "mortal" in card_atacante.selos else card_atacante.dano
+                        if "escudo" in card_alvo.selos:
+                            card_alvo.selos.remove("escudo")
+                            dano_causado = 0
+                            
+                        card_alvo.vida -= dano_causado
+                        self.flash_inimigo[alvo_idx] = 200
+                        
+                        
+                        if "espinhos" in card_alvo.selos and dano_causado > 0:
+                            card_atacante.vida -= 1
+                            
+                        if card_alvo.vida <= 0:
+                            self.slots_inimigos[alvo_idx] = None
+                    
+                    else:
+                        self.peso_balanca += card_atacante.dano
+                        
+                # Limpa a carta aliada se ela morreu nos espinhos
+                if card_atacante.vida <= 0:
+                    self.slots_aliados[self.idx_atacante_atual] = None
+
+                if self.peso_balanca >= 5:
+                    self.mensagem_debug = "VITÓRIA! A balança tombou totalmente."
+                    self.terminou = True
+                    self.proxima_cena = "mapa"
+                    return
+                    
                 self.dano_aplicado = True
 
             if self.progresso_ataque >= 1.0:
@@ -638,19 +671,43 @@ class CenaCombate(CenaBase):
             self.progresso_ataque += dt * self.velocidade_ataque
 
             if self.progresso_ataque >= 0.5 and not self.dano_aplicado:
-                if self.slots_aliados[self.idx_atacante_atual] is not None:
-                    self.slots_aliados[self.idx_atacante_atual].vida -= card_atacante.dano
-                    self.flash_aliado[self.idx_atacante_atual] = 200
-                    if self.slots_aliados[self.idx_atacante_atual].vida <= 0:
-                        self.slots_aliados[self.idx_atacante_atual] = None
-                else:
-                    self.peso_balanca -= card_atacante.dano
-                self.dano_aplicado = True
+                alvos = [self.idx_atacante_atual]
+                if "ataque_triplo" in card_atacante.selos:
+                    alvos = [i for i in [self.idx_atacante_atual - 1, self.idx_atacante_atual, self.idx_atacante_atual + 1] if 0 <= i <= 3]
+                
+                for alvo_idx in alvos:
+                    if card_atacante.vida <= 0:
+                        break  # Se morreu para um espinho, para o ataque
+                        
+                    card_alvo = self.slots_aliados[alvo_idx]
+                    
+                    # Selo Voar ou Mergulhador: Vai direto na balança (negativo porque é o inimigo)
+                    if "voar" in card_atacante.selos or "mergulhador" in card_atacante.selos:
+                        self.peso_balanca -= card_atacante.dano
+                        
+                    elif card_alvo is not None and "mergulhador" not in card_alvo.selos:
+                        dano_causado = 999 if "mortal" in card_atacante.selos else card_atacante.dano
+                        
+                        if "escudo" in card_alvo.selos:
+                            card_alvo.selos.remove("escudo")
+                            dano_causado = 0
+                            
+                        card_alvo.vida -= dano_causado
+                        self.flash_aliado[alvo_idx] = 200
+                        
+                        if "espinhos" in card_alvo.selos and dano_causado > 0:
+                            card_atacante.vida -= 1
+                            
+                        if card_alvo.vida <= 0:
+                            self.slots_aliados[alvo_idx] = None
+                    else:
+                        self.peso_balanca -= card_atacante.dano
+                        
+                # Limpa a carta inimiga se ela morreu nos espinhos
+                if card_atacante.vida <= 0:
+                    self.slots_inimigos[self.idx_atacante_atual] = None
 
-            if self.progresso_ataque >= 1.0:
-                self.idx_atacante_atual += 1
-                self.progresso_ataque = 0.0
-                self.dano_aplicado = False
+                self.dano_aplicado = True
 
     # -------------------------------------------------------------------------
     # Desenho
