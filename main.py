@@ -104,7 +104,7 @@ def main():
     relogio = pygame.time.Clock()
     cena_atual = Menu(tela)
 
-    # --- Estado global ---
+    # --- Estados globais ---
     vida_player_global = 2
     nivel_batalha_global = 1
     nodo_atual_tutorial_global = 0
@@ -186,12 +186,12 @@ def main():
             proxima = cena_atual.proxima_cena
             cena_atual.terminou = False
 
-        # --- Instância direta de CenaBase ---
+        # Instância direta da CenaBase
         if isinstance(proxima, CenaBase):
             cena_atual = proxima
             proxima = None
 
-        # --- Roteamento por string ---
+        # Roteamento por string (O controle vai ser principalmente através da string "proxima")
         elif proxima == "introducao":
             nova_cena = CenaIntroducao(tela)
             efeito_transicao(tela, nova_cena)
