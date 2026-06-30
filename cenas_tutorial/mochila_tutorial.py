@@ -30,8 +30,8 @@ class CenaMochila(CenaBase):
         self.fonte_dialogo = pygame.font.SysFont("Arial", 40)
 
         self.itens_sorteados = [
-            Item("Garrafa com Perna Cabeluda", "assets/garrafa.png"),
-            Item("Abridor de Cerveja", "assets/abridor.png")
+            Item("garrafa", "assets/garrafa.png"),
+            Item("abridor", "assets/abridor.png")
         ]
         self.itens_adquiridos = [] 
         
