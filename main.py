@@ -88,20 +88,13 @@ def main():
     # --- Elementos de interface ---
     imagens_ui = {
         "campainha": pygame.transform.scale(
-            pygame.image.load("assets/campainha.png").convert_alpha(), (120, 120)
-        ),
-        "cantil": pygame.transform.scale(
-            pygame.image.load("assets/cantil.png").convert_alpha(), (80, 80)
-        ),
+            pygame.image.load("assets/campainha.png").convert_alpha(), (120, 120)),
         "copo1": pygame.transform.scale(
-            pygame.image.load("assets/copo1.png").convert_alpha(), (80, 96)
-        ),
+            pygame.image.load("assets/copo1.png").convert_alpha(), (80, 96)),
         "copo2": pygame.transform.scale(
-            pygame.image.load("assets/copo2.png").convert_alpha(), (80, 96)
-        ),
+            pygame.image.load("assets/copo2.png").convert_alpha(), (80, 96)),
         "combate": pygame.transform.scale(
-            pygame.image.load("cenarios/combate.png").convert(), (LARGURA, ALTURA)
-        ),
+            pygame.image.load("cenarios/combate.png").convert(), (LARGURA, ALTURA)),
     }
 
     relogio = pygame.time.Clock()
