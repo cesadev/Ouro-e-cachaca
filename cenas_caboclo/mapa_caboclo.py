@@ -29,7 +29,7 @@ class CenaMapa(CenaBase):
             {"id": 10, "rect": pygame.Rect(745, 694, 80, 80), "destino": "fogueira", "proximos": [12]},
             {"id": 11, "rect": pygame.Rect(843, 117, 80, 80), "destino": "fogueira", "proximos": [12]},
             {"id": 12, "rect": pygame.Rect(882, 414, 80, 80), "destino": "luta_3_mapa_1", "proximos": [13, 14]},
-            {"id": 13, "rect": pygame.Rect(902, 257, 80, 80), "destino": "comprar_cartas_caboclo", "proximos": [15]},
+            {"id": 13, "rect": pygame.Rect(925, 257, 80, 80), "destino": "comprar_cartas_caboclo", "proximos": [15]},
             {"id": 14, "rect": pygame.Rect(970, 532, 80, 80), "destino": "fogueira", "proximos": [16]},
             {"id": 15, "rect": pygame.Rect(1118, 257, 80, 80), "destino": "fogueira", "proximos": [17]},
             {"id": 16, "rect": pygame.Rect(1140, 524, 80, 80), "destino": "selos", "proximos": [17]},
