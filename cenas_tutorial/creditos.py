@@ -10,25 +10,14 @@ class CenaCreditos(CenaBase):
         self.proxima_cena = None
 
         try:
-            path_fundo = os.path.join("cenarios", "Creditos.png")
+            path_fundo = os.path.join("cenarios", "Creditos1.png")
             img = pygame.image.load(path_fundo).convert()
             self.fundo = pygame.transform.scale(img, tela.get_size())
         except FileNotFoundError:
             self.fundo = pygame.Surface(tela.get_size())
             self.fundo.fill((18, 18, 30))
 
-        self.fonte_titulo = pygame.font.SysFont("Arial", 60, bold=True)
-        self.fonte_texto = pygame.font.SysFont("Arial", 28)
         self.fonte_botao = pygame.font.SysFont("Arial", 28, bold=True)
-
-        self.creditos = [
-            "Desenvolvimento: Seu Nome Aqui",
-            "Programação: Seu Nome Aqui",
-            "Arte e Design: Maru",
-            "Música e Efeitos: Seu Nome Aqui",
-            "Agradecimentos: Neymar",
-        ]
-
         largura, altura = tela.get_size()
         self.rect_voltar = pygame.Rect(largura // 2 - 100, altura - 110, 200, 60)
 
@@ -49,16 +38,6 @@ class CenaCreditos(CenaBase):
 
     def desenhar(self):
         self.tela.blit(self.fundo, (0, 0))
-
-        largura, altura = self.tela.get_size()
-        txt_titulo = self.fonte_titulo.render("CRÉDITOS", True, (255, 255, 255))
-        self.tela.blit(txt_titulo, (largura // 2 - txt_titulo.get_width() // 2, 80))
-
-        y_texto = 180
-        for linha in self.creditos:
-            txt_credito = self.fonte_texto.render(linha, True, (240, 240, 240))
-            self.tela.blit(txt_credito, (largura // 2 - txt_credito.get_width() // 2, y_texto))
-            y_texto += 40
 
         pygame.draw.rect(self.tela, (90, 50, 20), self.rect_voltar)
         pygame.draw.rect(self.tela, (218, 165, 32), self.rect_voltar, 3)

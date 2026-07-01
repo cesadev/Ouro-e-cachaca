@@ -172,6 +172,14 @@ def main():
 
             # Salva vida ao sair de combate
             if isinstance(cena_atual, CenaCombate):
+                try:
+                    posicao_musica = getattr(cena_atual, "posicao_musica_anterior_ms", 0)
+                    pygame.mixer.music.load("Musicas/Instrumental game.mp3")
+                    pygame.mixer.music.set_volume(0.6)
+                    pygame.mixer.music.play(-1, start=posicao_musica / 1000.0)
+                except pygame.error:
+                    pass
+
                 vida_player_global = cena_atual.vida_player
                 if getattr(cena_atual, 'resultado', None) == "vitoria":
                     nivel_batalha_global += 1

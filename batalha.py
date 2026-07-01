@@ -123,6 +123,10 @@ class CenaCombate(CenaBase):
             self.slots_inimigos[obstaculo["slot"]] = carta_obs
 
         self._carregar_intencoes_inimigas_do_turno(1)
+        try:
+            self.posicao_musica_anterior_ms = pygame.mixer.music.get_pos()
+        except pygame.error:
+            self.posicao_musica_anterior_ms = 0
         self._tocar_musica_da_cena("Musicas/Cabloco.mp3")
 
         # --- Dados visuais aleatórios (bagunça das pilhas) ---
