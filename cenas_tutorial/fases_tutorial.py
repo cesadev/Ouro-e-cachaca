@@ -16,16 +16,16 @@ fases_do_tutorial = {
 
     "luta_3_tutorial": {
         "script_inimigo": {
-            1: [{"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4}, "slot": 0},
+            1: [{"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4}, "slot": 0},
                 {"acao": "jogar_carta", "carta": {"nome": "acaua", "vida": 3, "dano": 2, "selos": ["voar"]}, "slot": 2}],
-            2: [{"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 1},
-                {"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 3}],
-            3: [{"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 2},
-                {"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 0}],
-            4: [{"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 1},
-                {"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 3}],
-            5: [{"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 2},
-                {"acao": "jogar_carta", "carta": {"nome": "laursa", "vida": 6, "dano": 4, "selos": []}, "slot": 0}]
+            2: [{"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 1},
+                {"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 3}],
+            3: [{"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 2},
+                {"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 0}],
+            4: [{"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 1},
+                {"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 3}],
+            5: [{"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 2},
+                {"acao": "jogar_carta", "carta": {"nome": "la_ursa", "vida": 6, "dano": 4, "selos": []}, "slot": 0}]
         }
     }
 }
