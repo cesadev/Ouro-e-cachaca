@@ -621,12 +621,16 @@ class CenaCombate(CenaBase):
                         
                 if card_atacante.vida <= 0:
                     self.slots_aliados[self.idx_atacante_atual] = None
-
+                
+    
                 if self.peso_balanca >= 5:
                     self.mensagem_debug = "VITÓRIA! A balança tombou totalmente."
                     self.terminou = True
                     self.proxima_cena = "mapa"
                     return
+                
+                    
+                
                     
                 self.dano_aplicado = True
 
@@ -656,7 +660,12 @@ class CenaCombate(CenaBase):
                 # Fase inimiga encerrada: verifica derrota
                 if self.peso_balanca <= -5:
                     self.vida_player -= 1
-                    if self.vida_player <= 0:
+
+                    if self.vida_player <= 0 and self.id_combate == "luta_3_tutorial":
+                        self.terminou = True
+                        self.proxima_cena = "fim_tutorial"
+                        return
+                    elif self.vida_player <= 0:
                         self.mensagem_debug = "Você sucumbiu..."
                         self.terminou = True
                         self.proxima_cena = "game_over"

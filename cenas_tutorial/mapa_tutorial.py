@@ -38,7 +38,7 @@ class CenaMapa(CenaBase):
                 pos_mouse = pygame.mouse.get_pos()
 
                 if self.rect_pular_mapa.collidepoint(pos_mouse):
-                    self.proxima_cena = "mapa_caboclo"
+                    self.proxima_cena = "fim_tutorial"
                     self.terminou = True
                     return
 

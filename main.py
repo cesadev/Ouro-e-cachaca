@@ -4,6 +4,7 @@ from menu import Menu
 from cartas import Carta
 from cenas_tutorial.cena_introducao import CenaIntroducao
 from cenas_tutorial.tutorial import CenaTutorial
+from cenas_tutorial.fim_tutorial import CenaFimTutorial
 
 from cenas_tutorial.mapa_tutorial import CenaMapa
 from cenas_caboclo.mapa_caboclo import CenaMapa as CenaMapaCaboclo
@@ -200,6 +201,12 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
+        elif proxima == "fim_tutorial":
+            nova_cena = CenaFimTutorial(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+        
         elif proxima == "mapa":
             if mapa_atual == "caboclo":
                 nova_cena = CenaMapaCaboclo(tela, nodo_atual_caboclo_global)
@@ -239,6 +246,8 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
+
+          #==============SEÇÃO DE EVENTOS =============
         elif proxima == "comprar_cartas_caboclo":
             nova_cena = CenaEscolhaCarta(
                 tela, imagens_versos, imagens_cartas, imagens_ui,
