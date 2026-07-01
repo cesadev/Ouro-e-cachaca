@@ -37,6 +37,7 @@ class CenaMapa(CenaBase):
         
         largura_tela = tela.get_width()
         self.rect_inventario = pygame.Rect(largura_tela - 220, 30, 180, 50)
+        self.rect_pular_mapa = pygame.Rect(50, 20, 300, 52)
         self.fonte_btn = pygame.font.SysFont("Arial", 22, bold=True)
                 
 
@@ -44,6 +45,11 @@ class CenaMapa(CenaBase):
         for evento in eventos:
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 pos_mouse = pygame.mouse.get_pos()
+
+                if self.rect_pular_mapa.collidepoint(pos_mouse):
+                    self.proxima_cena = "mapa_papafigo"
+                    self.terminou = True
+                    return
 
                 if self.rect_inventario.collidepoint(pos_mouse):
                     self.proxima_cena = "inventario"
@@ -75,6 +81,14 @@ class CenaMapa(CenaBase):
         ponto_y = rect_atual.top - 10
 
         pygame.draw.polygon(self.tela, (255, 255, 0), [(ponto_x - 15, ponto_y - 20), (ponto_x + 15, ponto_y - 20),(ponto_x, ponto_y)])
+
+        pygame.draw.rect(self.tela, (225, 180, 50), self.rect_pular_mapa)
+        pygame.draw.rect(self.tela, (255, 255, 255), self.rect_pular_mapa, 3)
+        txt_pular = self.fonte_btn.render("PULAR MAPA", True, (30, 30, 30))
+        self.tela.blit(txt_pular, (
+            self.rect_pular_mapa.centerx - txt_pular.get_width()//2,
+            self.rect_pular_mapa.centery - txt_pular.get_height()//2
+        ))
 
         pygame.draw.rect(self.tela, (90, 50, 20), self.rect_inventario)
         pygame.draw.rect(self.tela, (218, 165, 32), self.rect_inventario, 3)

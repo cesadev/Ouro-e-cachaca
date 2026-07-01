@@ -108,14 +108,30 @@ def main():
     nodo_atual_caboclo_global = 0
     nodo_atual_papafigo_global = 0
     mapa_atual = "tutorial"
-
-    deck_jogador_global = [
-        Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
-        Carta("Curupira", 3, 2, imagens_cartas["curupira"], 2, 1),
-        Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
-        Carta("Caboclo", 1, 1, imagens_cartas["caboclo"], 1, 1, selos=["mergulhador"]),
-    ]
+    deck_jogador_global = []
     itens_jogador_global = []
+
+    def reiniciar_estado_jogo():
+        nonlocal vida_player_global, nivel_batalha_global
+        nonlocal nodo_atual_tutorial_global, nodo_atual_caboclo_global, nodo_atual_papafigo_global
+        nonlocal mapa_atual, deck_jogador_global, itens_jogador_global
+
+        vida_player_global = 2
+        nivel_batalha_global = 1
+        nodo_atual_tutorial_global = 0
+        nodo_atual_caboclo_global = 0
+        nodo_atual_papafigo_global = 0
+        mapa_atual = "tutorial"
+
+        deck_jogador_global = [
+            Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
+            Carta("Curupira", 3, 2, imagens_cartas["curupira"], 2, 1),
+            Carta("Capelobo", 1, 2, imagens_cartas["capelobo"], 1, 1),
+            Carta("Caboclo", 1, 1, imagens_cartas["caboclo"], 1, 1, selos=["mergulhador"]),
+        ]
+        itens_jogador_global = []
+
+    reiniciar_estado_jogo()
 
     rodando = True
     proxima = None
@@ -190,6 +206,7 @@ def main():
 
         # Roteamento por string (O controle vai ser principalmente através da string "proxima")
         elif proxima == "introducao":
+            reiniciar_estado_jogo()
             nova_cena = CenaIntroducao(tela)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
@@ -229,7 +246,7 @@ def main():
 
         elif proxima == "mapa_papafigo":
             mapa_atual = "papafigo"
-            nova_cena = CenaMapaPapafigo(tela, nodo_atual_caboclo_global)
+            nova_cena = CenaMapaPapafigo(tela, nodo_atual_papafigo_global)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None
@@ -397,6 +414,7 @@ def main():
             proxima = None
 
         elif proxima == "menu":
+            reiniciar_estado_jogo()
             nova_cena = Menu(tela)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
