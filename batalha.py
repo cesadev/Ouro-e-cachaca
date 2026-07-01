@@ -14,6 +14,22 @@ class CenaCombate(CenaBase):
         self.imagens_versos = imagens_versos
         self.imagens_ui = imagens_ui
 
+        self.indice_dicionario = 0
+
+        self.paginas_dicionario = [
+            pygame.transform.scale(pygame.image.load("dicionario/abridor.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/cantil.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/peixeira.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/garrafa.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/ataquetriplo.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/escudo.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/espinho.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/mergulhador.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/mortal.png").convert_alpha(),(321, 240)),
+            pygame.transform.scale(pygame.image.load("dicionario/sangue.png").convert_alpha(),(321, 240))
+        ]
+
+
         # --- Dados da fase ---
         self.nome_boss = dados_da_fase.get("nome", "Inimigo Desconhecido")
         self.script_inimigo = dados_da_fase.get("script_inimigo", {})
@@ -88,7 +104,7 @@ class CenaCombate(CenaBase):
             if caminho:
                 try:
                     img = pygame.image.load(caminho).convert_alpha()
-                    self.imagens_itens[nome] = pygame.transform.scale(img, (120, 120))
+                    self.imagens_itens[nome] = pygame.transform.scale(img, (80, 80))
                 except FileNotFoundError:
                     print(f"AVISO: imagem do item '{nome}' não encontrada em {caminho}")
                     self.imagens_itens[nome] = None
@@ -132,6 +148,8 @@ class CenaCombate(CenaBase):
         self.campainha_rect = pygame.Rect(172, 50, 120, 120)
         self.comprar_pernas_rect = pygame.Rect(1190, 465, 144, 176)
         self.comprar_deck_rect = pygame.Rect(1350, 465, 144, 176)
+
+        # BOTOES DO DICIONARIO
         self.descricao_left_rect = pygame.Rect(1150, 130, 40, 40)
         self.descricao_right_rect = pygame.Rect(1450, 130, 40, 40)
 
@@ -247,17 +265,29 @@ class CenaCombate(CenaBase):
         if {"nome": nome_item} in self.itens_jogador:
             self.itens_jogador.remove({"nome": nome_item})
 
-    # -------------------------------------------------------------------------
-    # Processamento de eventos
-    # -------------------------------------------------------------------------
-
+    # Processamento de evento
     def processar_eventos(self, eventos):
         for event in eventos:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pos_mouse = event.pos
+
+                # Checa se o jogador clicou para passar a página do dicionário
+                if self.descricao_left_rect.collidepoint(pos_mouse):
+                    if self.indice_dicionario > 0:
+                        self.indice_dicionario -= 1
+                # O continue garante que esse clique não afete outras coisas na tela
+                        continue 
+            
+        # Verifica colisão com a seta da direita (para avançar página)
+                elif self.descricao_right_rect.collidepoint(pos_mouse):
+                    if self.indice_dicionario < len(self.paginas_dicionario) - 1:
+                        self.indice_dicionario += 1
+                    continue
+
             if event.type != pygame.MOUSEBUTTONDOWN:
                 continue
 
             pos_mouse = pygame.mouse.get_pos()
-
             # --- Botão direito: cancelar ação atual ---
             if event.button == 3:
                 if self.estado_atual in ["sacrificio", "posicionamento"]:
@@ -514,7 +544,7 @@ class CenaCombate(CenaBase):
         pos_x_item = 1190
         for item in self.itens_jogador[:4]:  # aumenta o limite pra ver quantos chegam
             nome_item = item["nome"] if isinstance(item, dict) else item.nome
-            self.hitboxes_itens.append((pygame.Rect(pos_x_item, 330, 120, 120), nome_item))
+            self.hitboxes_itens.append((pygame.Rect(pos_x_item, 330, 100, 100), nome_item))
             pos_x_item += 140
 
         # Hitboxes da mão
@@ -742,6 +772,11 @@ class CenaCombate(CenaBase):
 
     def desenhar(self):
         self.tela.blit(self.imagem_fundo, (0, 0))
+        # dicionario
+        img_atual = self.paginas_dicionario[self.indice_dicionario]
+        rect_img = img_atual.get_rect(center=(1320, 170)) 
+        self.tela.blit(img_atual, rect_img)
+
 
         # Balança
         centro_x, centro_y, raio = 240, 350, 128
