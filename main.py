@@ -28,6 +28,7 @@ from cenas_tutorial.cena_opcoes import CenaOpcoes
 from cenas_tutorial.cena_pause import CenaPause
 from cenas_tutorial.fogueira_tutorial import CenaFogueiraTutorial
 from fogueira import CenaFogueira
+from game_over import CenaGameOver
 
 def efeito_transicao(tela, cena_nova):
     largura, altura = tela.get_size()
@@ -462,6 +463,13 @@ def main():
             cena_atual = nova_cena
             proxima = None
 
+        elif isinstance(proxima, tuple) and len(proxima) == 2 and proxima[0] == "opcoes":
+            cena_anterior = proxima[1]
+            nova_cena = CenaOpcoes(tela, cena_anterior=cena_anterior)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
         elif proxima == "opcoes":
             nova_cena = CenaOpcoes(tela)
             efeito_transicao(tela, nova_cena)
@@ -475,6 +483,12 @@ def main():
         elif proxima == "menu":
             reiniciar_estado_jogo()
             nova_cena = Menu(tela)
+            efeito_transicao(tela, nova_cena)
+            cena_atual = nova_cena
+            proxima = None
+
+        elif proxima == "game_over":
+            nova_cena = CenaGameOver(tela)
             efeito_transicao(tela, nova_cena)
             cena_atual = nova_cena
             proxima = None

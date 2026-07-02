@@ -692,10 +692,18 @@ class CenaCombate(CenaBase):
                 if self.peso_balanca <= -5:
                     self.vida_player -= 1
 
-                    if self.nome_fase == "luta_3_tutorial":
+                    if "tutorial" in self.nome_fase:
+                        if self.vida_player <= 0:
+                            self.mensagem_debug = "Você perdeu as duas vidas do tutorial."
+                            self.terminou = True
+                            self.proxima_cena = "fim_tutorial"
+                            return
+
+                        self.mensagem_debug = "Você perdeu uma vida no tutorial. Voltando ao mapa..."
                         self.terminou = True
-                        self.proxima_cena = "fim_tutorial"
+                        self.proxima_cena = "mapa"
                         return
+
                     if self.vida_player <= 0:
                         self.mensagem_debug = "Você sucumbiu..."
                         self.terminou = True

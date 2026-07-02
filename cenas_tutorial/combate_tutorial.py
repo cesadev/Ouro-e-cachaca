@@ -121,7 +121,7 @@ class CenaCombateTutorial(CenaBase):
         self.fonte_mini = pygame.font.SysFont("Arial", 14) 
         self.fonte_dialogo = pygame.font.SysFont("Arial", 40)
         self.fonte_btn = pygame.font.SysFont("Arial", 22, bold=True)
-        self.rect_pular_batalha = pygame.Rect(50, 20, 260, 52)
+        self.rect_pular_batalha = pygame.Rect(1180, 20, 260, 52)
         self.index_foco = None 
 
     def adicionar_dialogos(self, lista):

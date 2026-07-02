@@ -3,12 +3,13 @@ import pygame
 from cena_base import CenaBase
 
 class CenaOpcoes(CenaBase):
-    def __init__(self, tela, volume_musica=0.6, volume_efeitos=1.0):
+    def __init__(self, tela, volume_musica=0.6, volume_efeitos=1.0, cena_anterior=None):
         super().__init__(tela)
         self.tela = tela
         self.volume_musica = volume_musica
         self.volume_efeitos = volume_efeitos
         self.tela_cheia = False
+        self.cena_anterior = cena_anterior
 
         try:
             img = pygame.image.load("cenarios/4k tela de opções.png").convert()
@@ -45,7 +46,7 @@ class CenaOpcoes(CenaBase):
                 pos_mouse = evento.pos
                 if self.rect_voltar.collidepoint(pos_mouse):
                     self.terminou = True
-                    self.proxima_cena = "menu"
+                    self.proxima_cena = self.cena_anterior if self.cena_anterior is not None else "menu"
                 elif self.rect_musica_minus.collidepoint(pos_mouse):
                     self.volume_musica = max(0.0, round(self.volume_musica - 0.1, 1))
                     pygame.mixer.music.set_volume(self.volume_musica)
@@ -60,7 +61,7 @@ class CenaOpcoes(CenaBase):
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_ESCAPE:
                     self.terminou = True
-                    self.proxima_cena = "menu"
+                    self.proxima_cena = self.cena_anterior if self.cena_anterior is not None else "menu"
 
     def atualizar(self, dt):
         self.opcoes[0] = ("Volume Música", f"{int(self.volume_musica * 100)}%")
